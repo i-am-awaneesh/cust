@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HeavyRent Pro — Customer Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg-base: #080C14;
+  --bg-surface: #0D1420;
+  --bg-card: #111827;
+  --bg-card-hover: #151E2E;
+  --bg-elevated: #1A2438;
+  --border: rgba(255,255,255,0.07);
+  --border-bright: rgba(255,255,255,0.12);
+  --amber: #F59E0B;
+  --amber-glow: rgba(245,158,11,0.12);
+  --amber-dim: rgba(245,158,11,0.6);
+  --blue: #3B82F6;
+  --blue-glow: rgba(59,130,246,0.12);
+  --green: #10B981;
+  --green-glow: rgba(16,185,129,0.12);
+  --red: #EF4444;
+  --red-glow: rgba(239,68,68,0.12);
+  --orange: #F97316;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #475569;
+  --sidebar-w: 260px;
+  --topbar-h: 64px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-base); color: var(--text-primary); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+/* LAYOUT */
+.app { display: flex; height: 100vh; overflow: hidden; }
+.sidebar { width: var(--sidebar-w); background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; position: relative; z-index: 50; }
+.sidebar::after { content: ''; position: absolute; right: -1px; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, transparent, rgba(245,158,11,0.25), transparent); }
+.content-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: var(--topbar-h); background: rgba(13,20,32,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 12px; flex-shrink: 0; z-index: 40; }
+.main { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+/* SIDEBAR */
+.logo-area { padding: 18px 18px 14px; border-bottom: 1px solid var(--border); }
+.logo-lockup { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--amber), #D97706); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 14px rgba(245,158,11,0.28); flex-shrink: 0; }
+.logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 21px; letter-spacing: 1.5px; color: var(--text-primary); line-height: 1; }
+.logo-sub { font-size: 9.5px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 1px; }
+.nav-wrap { flex: 1; padding: 10px 10px; overflow-y: auto; }
+.nav-section-label { font-size: 9.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); padding: 10px 10px 5px; margin-top: 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; cursor: pointer; transition: all 0.2s; color: var(--text-secondary); font-size: 13.5px; font-weight: 500; position: relative; margin-bottom: 2px; user-select: none; border: 1px solid transparent; }
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+.nav-item.active { background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.04)); color: var(--amber); border-color: rgba(245,158,11,0.18); }
+.nav-icon { width: 17px; height: 17px; flex-shrink: 0; }
+.nav-label { flex: 1; }
+.nav-badge { background: var(--amber); color: #000; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 20px; }
+.nav-badge.blue { background: var(--blue); color: white; }
+.sidebar-user { padding: 12px 14px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, var(--amber), #D97706); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; color: #000; flex-shrink: 0; }
+.user-info-name { font-size: 12.5px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+.user-info-role { font-size: 11px; color: var(--text-muted); }
+.logout-btn { margin-left: auto; width: 26px; height: 26px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; font-size: 13px; }
+.logout-btn:hover { color: var(--red); border-color: var(--red); }
+
+/* TOPBAR */
+.page-title-text { font-size: 15px; font-weight: 700; color: var(--text-primary); flex: 1; }
+.topbar-search { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 0 14px; width: 220px; height: 36px; transition: all 0.2s; }
+.topbar-search:focus-within { border-color: var(--amber); }
+.topbar-search input { background: transparent; border: none; outline: none; font-size: 13px; color: var(--text-primary); font-family: inherit; flex: 1; }
+.topbar-search input::placeholder { color: var(--text-muted); }
+.topbar-search svg { color: var(--text-muted); width: 14px; height: 14px; }
+.icon-btn { width: 36px; height: 36px; border-radius: 9px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; color: var(--text-secondary); position: relative; }
+.icon-btn:hover { border-color: var(--border-bright); color: var(--text-primary); }
+.notif-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: var(--amber); border-radius: 50%; border: 1.5px solid var(--bg-surface); animation: ping 2s infinite; }
+@keyframes ping { 0%,100%{ transform:scale(1);opacity:1; } 50%{ transform:scale(1.4);opacity:0.7; } }
+.topbar-user-chip { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 9px; padding: 4px 12px 4px 5px; cursor: pointer; transition: all 0.2s; }
+.topbar-user-chip:hover { border-color: var(--border-bright); }
+.topbar-user-chip span { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+/* PAGES */
+.page { display: none; animation: fadeUp 0.25s ease; }
+.page.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.step-content { display: none; }
+.step-content.active { display: block; animation: fadeUp 0.25s ease; }
+
+/* CARDS */
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+
+/* KPIs */
+.kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 22px; }
+.kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; position: relative; overflow: hidden; transition: all 0.2s; cursor: default; }
+.kpi-card:hover { transform: translateY(-2px); border-color: var(--border-bright); }
+.kpi-card::after { content:''; position:absolute; inset:0; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.kpi-card:hover::after { opacity:1; }
+.kpi-card.amber::after { background: radial-gradient(circle at 90% 10%, rgba(245,158,11,0.08), transparent 60%); }
+.kpi-card.blue::after { background: radial-gradient(circle at 90% 10%, rgba(59,130,246,0.08), transparent 60%); }
+.kpi-card.green::after { background: radial-gradient(circle at 90% 10%, rgba(16,185,129,0.08), transparent 60%); }
+.kpi-card.red::after { background: radial-gradient(circle at 90% 10%, rgba(239,68,68,0.08), transparent 60%); }
+.kpi-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.kpi-icon-wrap { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.kpi-icon-wrap.amber { background: var(--amber-glow); }
+.kpi-icon-wrap.blue { background: var(--blue-glow); }
+.kpi-icon-wrap.green { background: var(--green-glow); }
+.kpi-icon-wrap.red { background: var(--red-glow); }
+.kpi-trend { font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 6px; }
+.kpi-trend.up { background: var(--green-glow); color: var(--green); }
+.kpi-trend.down { background: var(--red-glow); color: var(--red); }
+.kpi-value { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 0.5px; color: var(--text-primary); line-height: 1; }
+.kpi-label { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+/* SECTION HEADER */
+.section-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.section-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
+.section-action { font-size: 12px; color: var(--amber); cursor: pointer; font-weight: 600; }
+.section-action:hover { opacity: 0.75; }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.2px; }
+.badge-green { background: var(--green-glow); color: var(--green); border: 1px solid rgba(16,185,129,0.18); }
+.badge-amber { background: var(--amber-glow); color: var(--amber); border: 1px solid rgba(245,158,11,0.18); }
+.badge-blue { background: var(--blue-glow); color: #60A5FA; border: 1px solid rgba(59,130,246,0.18); }
+.badge-orange { background: rgba(249,115,22,0.1); color: var(--orange); border: 1px solid rgba(249,115,22,0.18); }
+.badge-red { background: var(--red-glow); color: #F87171; border: 1px solid rgba(239,68,68,0.18); }
+.badge-gray { background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border); }
+.pulse::before { content:'●'; margin-right:3px; display:inline-block; animation: ping 2s infinite; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; font-family: 'Plus Jakarta Sans', sans-serif; white-space: nowrap; }
+.btn-primary { background: linear-gradient(135deg, var(--amber), #D97706); color: #000; box-shadow: 0 4px 14px rgba(245,158,11,0.22); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245,158,11,0.32); }
+.btn-secondary { background: rgba(255,255,255,0.06); border: 1px solid var(--border-bright); color: var(--text-primary); }
+.btn-secondary:hover { background: rgba(255,255,255,0.1); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+.btn-ghost:hover { border-color: var(--border-bright); color: var(--text-primary); }
+.btn-danger { background: var(--red-glow); border: 1px solid rgba(239,68,68,0.25); color: #F87171; }
+.btn-danger:hover { background: rgba(239,68,68,0.14); }
+.btn-sm { padding: 6px 13px; font-size: 12px; border-radius: 8px; }
+.btn-xs { padding: 4px 9px; font-size: 11px; border-radius: 7px; }
+
+/* BOOKING CARDS */
+.booking-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: all 0.2s; margin-bottom: 12px; }
+.booking-card:hover { border-color: var(--border-bright); }
+.bk-header { padding: 14px 18px; display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--border); }
+.bk-id { font-size: 10.5px; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+.bk-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.bk-body { padding: 14px 18px; }
+.bk-meta { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 12px; }
+.bk-meta-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); }
+.bk-footer { padding: 10px 18px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 7px; background: rgba(0,0,0,0.12); }
+
+/* TIMELINE */
+.timeline-track { display: flex; align-items: center; }
+.tl-node { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.tl-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; font-weight: 700; }
+.tl-circle.done { background: var(--green); color: white; box-shadow: 0 0 10px rgba(16,185,129,0.25); }
+.tl-circle.active { background: var(--blue); color: white; box-shadow: 0 0 14px rgba(59,130,246,0.4); animation: glow-pulse 2s infinite; }
+@keyframes glow-pulse { 0%,100%{ box-shadow:0 0 10px rgba(59,130,246,0.4); } 50%{ box-shadow:0 0 18px rgba(59,130,246,0.6); } }
+.tl-circle.pending { background: var(--bg-elevated); border: 1.5px solid var(--border-bright); color: var(--text-muted); }
+.tl-label { font-size: 9.5px; color: var(--text-muted); text-align: center; white-space: nowrap; font-weight: 600; letter-spacing: 0.2px; }
+.tl-label.active { color: #60A5FA; } .tl-label.done { color: var(--green); }
+.tl-connector { flex: 1; height: 2px; margin: 0 2px; position: relative; top: -10px; }
+.tl-connector.done { background: var(--green); }
+.tl-connector.active { background: linear-gradient(to right, var(--green), var(--blue)); }
+.tl-connector.pending { background: var(--bg-elevated); }
+
+/* WIZARD */
+.wizard-steps { display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 22px; margin-bottom: 20px; }
+.wz-step { display: flex; align-items: center; gap: 8px; }
+.wz-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; transition: all 0.3s; }
+.wz-circle.done { background: var(--green); color: white; }
+.wz-circle.active { background: var(--amber); color: #000; box-shadow: 0 0 12px rgba(245,158,11,0.3); }
+.wz-circle.pending { background: var(--bg-elevated); border: 1.5px solid var(--border-bright); color: var(--text-muted); }
+.wz-name { font-size: 12px; font-weight: 600; color: var(--text-muted); transition: all 0.2s; }
+.wz-name.active { color: var(--amber); } .wz-name.done { color: var(--green); }
+.wz-line { flex: 1; height: 1px; background: var(--border); margin: 0 10px; }
+.wz-line.done { background: var(--green); } .wz-line.active { background: linear-gradient(to right, var(--green), var(--amber)); }
+
+/* INPUTS */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.form-input { width: 100%; background: var(--bg-base); border: 1px solid var(--border-bright); border-radius: 10px; padding: 10px 14px; font-size: 13.5px; color: var(--text-primary); font-family: 'Plus Jakarta Sans', sans-serif; outline: none; transition: all 0.2s; }
+.form-input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.08); }
+.form-input::placeholder { color: var(--text-muted); }
+select.form-input { appearance: none; cursor: pointer; }
+.input-with-icon { position: relative; }
+.input-with-icon .form-input { padding-left: 38px; }
+.input-icon-left { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--text-muted); }
+
+/* VEHICLE CARDS */
+.vehicle-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+.vehicle-cat-card { background: var(--bg-elevated); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px 12px; cursor: pointer; text-align: center; transition: all 0.2s; position: relative; overflow: hidden; }
+.vehicle-cat-card:hover { border-color: rgba(245,158,11,0.35); transform: translateY(-2px); }
+.vehicle-cat-card.selected { border-color: var(--amber); background: rgba(245,158,11,0.06); box-shadow: 0 0 0 1px var(--amber), 0 6px 20px rgba(245,158,11,0.1); }
+.vc-icon { font-size: 28px; display: block; margin-bottom: 8px; filter: grayscale(0.1); }
+.vc-name { font-size: 11.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.check-mark { position: absolute; top: 7px; right: 7px; width: 17px; height: 17px; background: var(--amber); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #000; opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+.vehicle-cat-card.selected .check-mark { opacity: 1; transform: scale(1); }
+
+/* QTY */
+.qty-control { display: flex; align-items: center; gap: 16px; }
+.qty-btn { width: 36px; height: 36px; border-radius: 9px; background: var(--bg-elevated); border: 1px solid var(--border-bright); color: var(--text-primary); font-size: 20px; font-weight: 300; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; user-select: none; }
+.qty-btn:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-glow); }
+.qty-num { font-family: 'Bebas Neue', sans-serif; font-size: 40px; color: var(--text-primary); min-width: 50px; text-align: center; line-height: 1; }
+
+/* DURATION */
+.dur-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+.dur-pill { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-bright); font-size: 12.5px; font-weight: 600; cursor: pointer; color: var(--text-secondary); background: var(--bg-elevated); transition: all 0.2s; }
+.dur-pill:hover { border-color: var(--amber); color: var(--amber); }
+.dur-pill.active { background: var(--amber-glow); border-color: var(--amber); color: var(--amber); }
+
+/* PAYMENT OPTIONS */
+.pay-option { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--border); cursor: pointer; transition: all 0.2s; margin-bottom: 8px; background: var(--bg-elevated); }
+.pay-option:hover { border-color: rgba(245,158,11,0.35); }
+.pay-option.selected { border-color: var(--amber); background: var(--amber-glow); }
+.pay-icon { width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.pay-name { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
+.pay-desc { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+.radio-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border-bright); margin-left: auto; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.pay-option.selected .radio-dot { border-color: var(--amber); }
+.radio-dot::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); opacity: 0; transition: all 0.2s; }
+.pay-option.selected .radio-dot::after { opacity: 1; }
+
+/* PRICE TABLE */
+.price-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.price-row:last-child { border-bottom: none; }
+.price-row .label { color: var(--text-secondary); }
+.price-row .value { font-weight: 600; color: var(--text-primary); }
+.price-row.total { padding-top: 10px; margin-top: 4px; border-top: 1px solid var(--border-bright); border-bottom: none; }
+.price-row.total .label { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
+.price-row.total .value { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--amber); letter-spacing: 0.5px; }
+
+/* FULFILL ROWS */
+.fulfill-row { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-radius: 10px; background: var(--bg-elevated); border: 1px solid var(--border); margin-bottom: 7px; }
+.fulfill-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.fulfill-dot.blue { background: var(--blue); box-shadow: 0 0 6px rgba(59,130,246,0.5); }
+.fulfill-dot.orange { background: var(--orange); box-shadow: 0 0 6px rgba(249,115,22,0.5); }
+
+/* NOTIF */
+.notif-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.notif-item:last-child { border-bottom: none; }
+.notif-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.notif-text { font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); }
+.notif-item.unread .notif-text { color: var(--text-primary); font-weight: 500; }
+.notif-time { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+.notif-unread-dot { width: 6px; height: 6px; background: var(--amber); border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+
+/* TABLE */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { padding: 10px 14px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); text-align: left; }
+.data-table td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text-secondary); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+.data-table td:first-child { font-weight: 700; color: var(--text-primary); }
+
+/* MAP */
+.map-mockup { background: var(--bg-base); border-radius: 10px; height: 175px; border: 1px solid var(--border); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.map-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px), linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px); background-size: 28px 28px; }
+.map-road-h { position: absolute; left: 0; right: 0; height: 1px; background: rgba(245,158,11,0.12); }
+.map-road-v { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(245,158,11,0.12); }
+.map-pulse { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 70px; height: 70px; border-radius: 50%; border: 1px solid rgba(245,158,11,0.25); animation: expand 2.5s ease-out infinite; }
+@keyframes expand { from{transform:translate(-50%,-50%) scale(0.3);opacity:0.8;} to{transform:translate(-50%,-50%) scale(1.6);opacity:0;} }
+.map-pin-wrap { position: absolute; display: flex; flex-direction: column; align-items: center; top: 40%; left: 50%; transform: translate(-50%,-100%); }
+.map-pin-body { width: 32px; height: 32px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: linear-gradient(135deg, var(--amber), #D97706); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(245,158,11,0.35); animation: bounce-pin 2s ease-in-out infinite; }
+@keyframes bounce-pin { 0%,100%{transform:rotate(-45deg) translateY(0);} 50%{transform:rotate(-45deg) translateY(-4px);} }
+.map-pin-inner { transform: rotate(45deg); font-size: 13px; }
+.map-label-tag { position: absolute; bottom: 8px; left: 8px; background: rgba(13,20,32,0.92); backdrop-filter: blur(10px); border: 1px solid var(--border-bright); border-radius: 7px; padding: 5px 10px; font-size: 11.5px; font-weight: 600; color: var(--text-primary); }
+.map-vehicles-tag { position: absolute; top: 8px; right: 8px; background: var(--green-glow); border: 1px solid rgba(16,185,129,0.25); border-radius: 7px; padding: 4px 9px; font-size: 11px; font-weight: 700; color: var(--green); }
+
+/* STAT MINI */
+.stat-mini { display: flex; align-items: center; gap: 10px; padding: 13px; border-radius: 10px; background: var(--bg-elevated); border: 1px solid var(--border); }
+.stat-mini-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.stat-mini-value { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--text-primary); line-height: 1; }
+.stat-mini-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ADVANCE CARD */
+.advance-card { background: linear-gradient(135deg, rgba(245,158,11,0.13), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.22); border-radius: 10px; padding: 14px; }
+.advance-amount { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--amber); letter-spacing: 1px; }
+.advance-label { font-size: 10px; color: var(--amber-dim); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+
+/* SUCCESS */
+.success-screen { text-align: center; padding: 44px 28px; max-width: 500px; margin: 0 auto; }
+.success-orb { width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, rgba(16,185,129,0.25), transparent); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 44px; animation: orb-appear 0.5s ease; }
+@keyframes orb-appear { from{transform:scale(0.3);opacity:0;} to{transform:scale(1);opacity:1;} }
+.success-title { font-family: 'Bebas Neue', sans-serif; font-size: 38px; letter-spacing: 2px; color: var(--text-primary); margin-bottom: 7px; }
+.booking-id-chip { display: inline-flex; align-items: center; gap: 7px; background: var(--bg-elevated); border: 1px solid var(--border-bright); border-radius: 20px; padding: 7px 18px; margin-bottom: 20px; font-size: 14px; font-weight: 700; color: var(--amber); font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; }
+
+/* PROFILE */
+.profile-cover { height: 110px; border-radius: 14px; background: linear-gradient(135deg, #0A2540, #1a3f6f, #0A2540); position: relative; overflow: hidden; margin-bottom: 44px; }
+.profile-cover::after { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Ccircle cx='40' cy='40' r='30' stroke='rgba(245,158,11,0.07)' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='18' stroke='rgba(245,158,11,0.04)' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E") repeat; }
+.profile-avatar-lg { width: 68px; height: 68px; border-radius: 16px; background: linear-gradient(135deg, var(--amber), #D97706); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #000; position: absolute; bottom: -34px; left: 22px; border: 4px solid var(--bg-card); box-shadow: 0 6px 20px rgba(245,158,11,0.22); }
+.verified-check { position: absolute; bottom: -2px; right: -2px; width: 20px; height: 20px; background: var(--green); border-radius: 50%; border: 2px solid var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; }
+
+/* TOAST */
+#toast { position: fixed; bottom: 22px; right: 22px; z-index: 999; background: var(--bg-elevated); border: 1px solid var(--border-bright); backdrop-filter: blur(20px); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; box-shadow: 0 14px 36px rgba(0,0,0,0.5); transform: translateY(70px) scale(0.95); opacity: 0; transition: all 0.32s cubic-bezier(0.34,1.56,0.64,1); max-width: 340px; }
+#toast.show { transform: translateY(0) scale(1); opacity: 1; }
+.toast-icon-wrap { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.toast-msg { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.toast-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* INFO/WARN/SUCCESS BOXES */
+.info-box { background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.18); border-radius: 9px; padding: 11px 13px; font-size: 12px; color: #93C5FD; }
+.warn-box { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.18); border-radius: 9px; padding: 11px 13px; font-size: 12px; color: var(--amber); }
+.success-box { background: var(--green-glow); border: 1px solid rgba(16,185,129,0.22); border-radius: 9px; padding: 11px 13px; font-size: 12px; color: #6EE7B7; }
+
+/* MISC */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.flex { display: flex; align-items: center; }
+.flex-col { display: flex; flex-direction: column; }
+.gap-8 { gap: 8px; } .gap-12 { gap: 12px; }
+.mb-4{margin-bottom:4px;} .mb-8{margin-bottom:8px;} .mb-12{margin-bottom:12px;} .mb-14{margin-bottom:14px;} .mb-16{margin-bottom:16px;} .mb-20{margin-bottom:20px;} .mb-24{margin-bottom:24px;}
+.mt-auto{margin-top:auto;} .ml-auto{margin-left:auto;}
+.text-muted{color:var(--text-muted);} .text-secondary{color:var(--text-secondary);}
+.text-sm{font-size:13px;} .text-xs{font-size:11px;}
+.font-bold{font-weight:700;} .color-green{color:var(--green);} .color-amber{color:var(--amber);}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="logo-area">
+    <div class="logo-lockup">
+      <div class="logo-icon">🚜</div>
+      <div>
+        <div class="logo-text">HeavyRent Pro</div>
+        <div class="logo-sub">Customer Portal</div>
+      </div>
+    </div>
+  </div>
+  <nav class="nav-wrap">
+    <div class="nav-section-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke-width="1.8"/></svg>
+      <span class="nav-label">Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="showPage('book',this)">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="1.8"/><path d="M12 8v4l3 3" stroke-linecap="round" stroke-width="1.8"/></svg>
+      <span class="nav-label">New Booking</span>
+    </div>
+    <div class="nav-section-label">Rentals</div>
+    <div class="nav-item" onclick="showPage('active',this)">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 17H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-4m-6 4l2 2 4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg>
+      <span class="nav-label">Active Rentals</span>
+      <span class="nav-badge">3</span>
+    </div>
+    <div class="nav-item" onclick="showPage('history',this)">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-width="1.8"/></svg>
+      <span class="nav-label">History</span>
+    </div>
+    <div class="nav-section-label">Account</div>
+    <div class="nav-item" onclick="showPage('notifications',this)">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke-linecap="round" stroke-width="1.8"/></svg>
+      <span class="nav-label">Notifications</span>
+      <span class="nav-badge blue">5</span>
+    </div>
+    <div class="nav-item" onclick="showPage('profile',this)">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-width="1.8"/></svg>
+      <span class="nav-label">My Profile</span>
+    </div>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar">RK</div>
+    <div><div class="user-info-name">Rajesh Kumar</div><div class="user-info-role">Rajesh Constructions</div></div>
+    <div class="logout-btn" title="Logout">⏻</div>
+  </div>
+</aside>
+
+<!-- ===== CONTENT ===== -->
+<div class="content-wrap">
+  <header class="topbar">
+    <div class="page-title-text" id="page-title">Dashboard</div>
+    <div class="topbar-search">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="text" placeholder="Search bookings, invoices...">
+    </div>
+    <div class="icon-btn" onclick="showPage('notifications',null)">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <div class="notif-dot"></div>
+    </div>
+    <div class="topbar-user-chip">
+      <div class="user-avatar" style="width:26px;height:26px;font-size:11px;border-radius:7px;">RK</div>
+      <span>Rajesh Kumar</span>
+    </div>
+  </header>
+
+  <main class="main">
+
+  <!-- ===== DASHBOARD ===== -->
+  <div class="page active" id="page-dashboard">
+    <!-- Hero -->
+    <div style="background:linear-gradient(135deg,#0D1F3C 0%,#0A2540 60%,#0D2A4A 100%);border:1px solid rgba(245,158,11,0.14);border-radius:16px;padding:22px 26px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;">
+      <div style="position:absolute;right:0;top:0;bottom:0;width:280px;background:radial-gradient(ellipse at right,rgba(245,158,11,0.07),transparent 65%);pointer-events:none;"></div>
+      <div style="position:absolute;right:30px;bottom:-15px;font-size:70px;opacity:0.05;pointer-events:none;user-select:none;">🚜</div>
+      <div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;">Welcome back</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;color:var(--text-primary);line-height:1.1;">Rajesh Kumar</div>
+        <div style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;">Rajesh Constructions Pvt Ltd &nbsp;·&nbsp; <span style="color:var(--green);">●</span> <span style="color:var(--green);font-weight:600;">3 active rentals</span></div>
+      </div>
+      <button class="btn btn-primary" onclick="showPage('book',document.querySelectorAll('.nav-item')[1])">+ New Booking</button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card amber"><div class="kpi-top"><div class="kpi-icon-wrap amber">🚜</div><span class="kpi-trend up">+2 ↑</span></div><div class="kpi-value">3</div><div class="kpi-label">Active Rentals</div></div>
+      <div class="kpi-card blue"><div class="kpi-top"><div class="kpi-icon-wrap blue">💰</div><span class="kpi-trend up">+18% ↑</span></div><div class="kpi-value">₹4.2L</div><div class="kpi-label">This Month's Spend</div></div>
+      <div class="kpi-card green"><div class="kpi-top"><div class="kpi-icon-wrap green">✅</div><span class="kpi-trend up">All time</span></div><div class="kpi-value">28</div><div class="kpi-label">Completed Rentals</div></div>
+      <div class="kpi-card red"><div class="kpi-top"><div class="kpi-icon-wrap red">⚠️</div><span class="kpi-trend down">1 open</span></div><div class="kpi-value">1</div><div class="kpi-label">Open Complaint</div></div>
+    </div>
+
+    <!-- Active Bookings -->
+    <div class="section-hdr"><div class="section-title">Active Bookings</div><div class="section-action" onclick="showPage('active',null)">View all →</div></div>
+
+    <div class="booking-card">
+      <div class="bk-header">
+        <div><div class="bk-id">HR-2045 · NOIDA</div><div class="bk-title">5× JCB Backhoe Loader</div></div>
+        <span class="badge badge-green pulse">Active</span>
+      </div>
+      <div class="bk-body">
+        <div class="bk-meta">
+          <div class="bk-meta-item">📍 Sector 45, Noida</div>
+          <div class="bk-meta-item">📅 12–29 Jan 2025</div>
+          <div class="bk-meta-item">⏱️ <strong style="color:var(--amber);">4 days left</strong></div>
+          <div class="bk-meta-item">💰 ₹42,500/day</div>
+        </div>
+        <div class="flex gap-8 mb-14">
+          <span class="badge badge-blue">🔵 3 Platform Fleet</span>
+          <span class="badge badge-orange">🟠 2 Supplier Network</span>
+        </div>
+        <div class="timeline-track">
+          <div class="tl-node"><div class="tl-circle done">✓</div><div class="tl-label done">Confirmed</div></div>
+          <div class="tl-connector done"></div>
+          <div class="tl-node"><div class="tl-circle done">✓</div><div class="tl-label done">Dispatched</div></div>
+          <div class="tl-connector active"></div>
+          <div class="tl-node"><div class="tl-circle active">⚙</div><div class="tl-label active">Active</div></div>
+          <div class="tl-connector pending"></div>
+          <div class="tl-node"><div class="tl-circle pending">◎</div><div class="tl-label">Wrapping up</div></div>
+          <div class="tl-connector pending"></div>
+          <div class="tl-node"><div class="tl-circle pending">◎</div><div class="tl-label">Completed</div></div>
+        </div>
+      </div>
+      <div class="bk-footer">
+        <button class="btn btn-ghost btn-sm">📄 Contract</button>
+        <button class="btn btn-ghost btn-sm">Extend</button>
+        <button class="btn btn-danger btn-sm">⚠ Report</button>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto;">View Details →</button>
+      </div>
+    </div>
+
+    <div class="booking-card">
+      <div class="bk-header">
+        <div><div class="bk-id">HR-2031 · GURGAON</div><div class="bk-title">2× Mobile Crane + 3× Tipper Truck</div></div>
+        <span class="badge badge-amber">⏳ Dispatching</span>
+      </div>
+      <div class="bk-body">
+        <div class="bk-meta">
+          <div class="bk-meta-item">📍 NH-48 Highway Project</div>
+          <div class="bk-meta-item">📅 20 Jan – 15 Feb 2025</div>
+          <div class="bk-meta-item">💰 ₹78,000/day</div>
+        </div>
+        <span class="badge badge-orange mb-12">🟠 Fully Supplier Sourced</span>
+        <div class="warn-box" style="margin-top:10px;">⏳ Supplier vehicles confirmed. Dispatch expected by 10 AM tomorrow.</div>
+      </div>
+      <div class="bk-footer"><button class="btn btn-secondary btn-sm">Track Supplier →</button></div>
+    </div>
+  </div>
+
+  <!-- ===== NEW BOOKING ===== -->
+  <div class="page" id="page-book">
+    <div class="wizard-steps">
+      <div class="wz-step"><div class="wz-circle active" id="wc1">1</div><span class="wz-name active" id="wn1">Location</span></div>
+      <div class="wz-line" id="wl1"></div>
+      <div class="wz-step"><div class="wz-circle pending" id="wc2">2</div><span class="wz-name" id="wn2">Vehicle</span></div>
+      <div class="wz-line" id="wl2"></div>
+      <div class="wz-step"><div class="wz-circle pending" id="wc3">3</div><span class="wz-name" id="wn3">Qty & Duration</span></div>
+      <div class="wz-line" id="wl3"></div>
+      <div class="wz-step"><div class="wz-circle pending" id="wc4">4</div><span class="wz-name" id="wn4">Review</span></div>
+      <div class="wz-line" id="wl4"></div>
+      <div class="wz-step"><div class="wz-circle pending" id="wc5">5</div><span class="wz-name" id="wn5">Payment</span></div>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step-content active" id="step-1">
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title mb-14">📍 Project Site Location</div>
+          <div class="form-group"><label class="form-label">Search Address</label><div class="input-with-icon"><span class="input-icon-left">🔍</span><input class="form-input" type="text" placeholder="e.g. Sector 45, Noida, UP" value="Sector 45, Noida, UP"></div></div>
+          <div class="form-group"><label class="form-label">Site / Project Name</label><input class="form-input" type="text" placeholder="e.g. Metro Bridge Phase 2"></div>
+          <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-bottom:12px;">📍 Use Current Location</button>
+          <div class="info-box">💡 Vehicles within <strong>10 km radius</strong> shown first. Admin can extend up to 100 km for rural sites.</div>
+        </div>
+        <div class="card flex-col" style="gap:12px;">
+          <div class="section-title">Site Preview</div>
+          <div class="map-mockup" style="flex:1;min-height:160px;height:auto;">
+            <div class="map-grid"></div>
+            <div class="map-road-h" style="top:42%;"></div>
+            <div class="map-road-h" style="top:66%;"></div>
+            <div class="map-road-v" style="left:32%;"></div>
+            <div class="map-road-v" style="left:62%;"></div>
+            <div class="map-pulse"></div>
+            <div class="map-pin-wrap"><div class="map-pin-body"><div class="map-pin-inner">📍</div></div></div>
+            <div class="map-label-tag">📍 Sector 45, Noida</div>
+            <div class="map-vehicles-tag">✓ 42 vehicles nearby</div>
+          </div>
+          <div class="success-box">✓ 42 verified vehicles available within 10 km of your project site</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn btn-primary" onclick="goToStep(2)">Next: Select Vehicle →</button></div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-content" id="step-2">
+      <div class="card mb-14">
+        <div class="section-title mb-4">🚛 Select Vehicle Type</div>
+        <div class="text-secondary text-sm mb-14">Choose the equipment category you need at your construction site.</div>
+        <div class="vehicle-grid">
+          <div class="vehicle-cat-card selected" onclick="selectVehicle(this)"><div class="check-mark">✓</div><span class="vc-icon">🏗️</span><div class="vc-name">JCB / Backhoe</div><span class="badge badge-green" style="font-size:10px;">18 Ready</span></div>
+          <div class="vehicle-cat-card" onclick="selectVehicle(this)"><div class="check-mark">✓</div><span class="vc-icon">⛏️</span><div class="vc-name">Excavator</div><span class="badge badge-green" style="font-size:10px;">12 Ready</span></div>
+          <div class="vehicle-cat-card" onclick="selectVehicle(this)"><div class="check-mark">✓</div><span class="vc-icon">🏗</span><div class="vc-name">Mobile Crane</div><span class="badge badge-amber" style="font-size:10px;">4 Limited</span></div>
+          <div class="vehicle-cat-card" onclick="selectVehicle(this)"><div class="check-mark">✓</div><span class="vc-icon">🚛</span><div class="vc-name">Tipper Truck</div><span class="badge badge-green" style="font-size:10px;">25 Ready</span></div>
+          <div class="vehicle-cat-card" onclick="selectVehicle(this)"><div class="check-mark">✓</div><span class="vc-icon">🚜</span><div class="vc-name">Bulldozer</div><span class="badge badge-green" style="font-size:10px;">8 Ready</span></div>
+          <div class="vehicle-cat-card" onclick="selectVehicle(this)"><div class="check-mark">✓</div><span class="vc-icon">🏙️</span><div class="vc-name">Tower Crane</div><span class="badge badge-orange" style="font-size:10px;">Via Supplier</span></div>
+          <div class="vehicle-cat-card" onclick="selectVehicle(this)"><div class="check-mark">✓</div><span class="vc-icon">🔄</span><div class="vc-name">Concrete Mixer</div><span class="badge badge-green" style="font-size:10px;">10 Ready</span></div>
+          <div class="vehicle-cat-card" onclick="selectVehicle(this)"><div class="check-mark">✓</div><span class="vc-icon">🛣️</span><div class="vc-name">Road Roller</div><span class="badge badge-green" style="font-size:10px;">6 Ready</span></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;"><button class="btn btn-ghost" onclick="goToStep(1)">← Back</button><button class="btn btn-primary" onclick="goToStep(3)">Next: Qty & Duration →</button></div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step-content" id="step-3">
+      <div class="grid-2">
+        <div>
+          <div class="card mb-14">
+            <div class="section-title mb-14">🔢 Quantity Required</div>
+            <div class="form-label">JCB / Backhoe Loaders Needed</div>
+            <div class="qty-control" style="margin:14px 0;"><button class="qty-btn" onclick="changeQty(-1)">−</button><div class="qty-num" id="qty-display">5</div><button class="qty-btn" onclick="changeQty(1)">+</button></div>
+            <div class="info-box"><strong>5 JCBs:</strong> 3 from Platform Fleet 🔵 + 2 from Supplier Network 🟠</div>
+          </div>
+          <div class="card">
+            <div class="section-title mb-12">📅 Rental Duration</div>
+            <div class="dur-pills mb-14">
+              <div class="dur-pill" onclick="selDur(this)">Daily</div>
+              <div class="dur-pill active" onclick="selDur(this)">Weekly</div>
+              <div class="dur-pill" onclick="selDur(this)">Monthly</div>
+              <div class="dur-pill" onclick="selDur(this)">Custom</div>
+            </div>
+            <div class="grid-2">
+              <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date" value="2025-01-22"></div>
+              <div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="date" value="2025-01-29"></div>
+            </div>
+            <div style="background:var(--bg-elevated);border-radius:9px;padding:9px 13px;font-size:13px;color:var(--text-secondary);">Duration: <strong style="color:var(--amber);font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.5px;">7 DAYS</strong></div>
+          </div>
+        </div>
+        <div class="card flex-col">
+          <div class="section-title mb-14">💰 Live Price Estimate</div>
+          <div class="fulfill-row"><div class="fulfill-dot blue"></div><div style="flex:1;margin-left:4px;"><div style="font-size:13px;font-weight:700;color:var(--text-primary);">3× JCB — Platform Fleet</div><div style="font-size:11px;color:var(--text-muted);">₹8,500/day × 7 days × 3 units</div></div><div style="font-weight:700;color:var(--text-primary);">₹1,78,500</div></div>
+          <div class="fulfill-row"><div class="fulfill-dot orange"></div><div style="flex:1;margin-left:4px;"><div style="font-size:13px;font-weight:700;color:var(--text-primary);">2× JCB — Supplier Network</div><div style="font-size:11px;color:var(--text-muted);">₹9,000/day × 7 days × 2 units</div></div><div style="font-weight:700;color:var(--text-primary);">₹1,26,000</div></div>
+          <div class="divider"></div>
+          <div class="price-row"><span class="label">Subtotal</span><span class="value">₹3,04,500</span></div>
+          <div class="price-row"><span class="label">GST (18%)</span><span class="value">₹54,810</span></div>
+          <div class="price-row"><span class="label">Platform Fee (12%)</span><span class="value">₹36,540</span></div>
+          <div class="price-row total"><span class="label">Total</span><span class="value">₹3,95,850</span></div>
+          <div class="advance-card" style="margin-top:auto;padding-top:14px;">
+            <div class="advance-label">Advance to pay now (30%)</div>
+            <div class="advance-amount">₹1,18,755</div>
+            <div style="font-size:11px;color:var(--amber-dim);margin-top:3px;">Remaining ₹2,77,095 after dispatch</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="goToStep(2)">← Back</button><button class="btn btn-primary" onclick="goToStep(4)">Review Order →</button></div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step-content" id="step-4">
+      <div class="card mb-14">
+        <div class="section-title mb-16">📋 Order Review</div>
+        <div class="grid-2 mb-14">
+          <div>
+            <div class="form-label" style="margin-bottom:10px;">Booking Summary</div>
+            <div class="price-row"><span class="label">Site</span><span class="value">Sector 45, Noida</span></div>
+            <div class="price-row"><span class="label">Vehicle</span><span class="value">JCB / Backhoe Loader</span></div>
+            <div class="price-row"><span class="label">Quantity</span><span class="value">5 Units</span></div>
+            <div class="price-row"><span class="label">Duration</span><span class="value">22–29 Jan 2025</span></div>
+          </div>
+          <div>
+            <div class="form-label" style="margin-bottom:10px;">Cost Summary</div>
+            <div class="price-row"><span class="label">Fleet (3× JCB)</span><span class="value">₹1,78,500</span></div>
+            <div class="price-row"><span class="label">Supplier (2× JCB)</span><span class="value">₹1,26,000</span></div>
+            <div class="price-row"><span class="label">GST 18%</span><span class="value">₹54,810</span></div>
+            <div class="price-row total"><span class="label">Grand Total</span><span class="value">₹3,95,850</span></div>
+          </div>
+        </div>
+        <div class="success-box mb-12">✅ <strong>Fulfillment Confirmed.</strong> 3 JCBs from platform inventory (immediate). 2 JCBs from verified supplier network (within 24 hrs).</div>
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:var(--bg-elevated);border-radius:9px;border:1px solid var(--border);">
+          <input type="checkbox" id="tc-cb" style="margin-top:2px;accent-color:var(--amber);width:14px;height:14px;flex-shrink:0;cursor:pointer;">
+          <label for="tc-cb" style="font-size:12.5px;color:var(--text-secondary);cursor:pointer;line-height:1.5;">I agree to the <a href="#" style="color:var(--amber);font-weight:600;">Terms & Conditions</a>, rental agreement, and cancellation policy.</label>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <button class="btn btn-ghost" onclick="goToStep(3)">← Back</button>
+        <button class="btn btn-primary" onclick="goToStep(5)">Proceed to Payment · ₹1,18,755 →</button>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step-content" id="step-5">
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title mb-14">💳 Payment Method</div>
+          <div class="pay-option selected" onclick="selectPay(this)"><div class="pay-icon">🔵</div><div><div class="pay-name">UPI</div><div class="pay-desc">GPay · PhonePe · Paytm · BHIM</div></div><span class="badge badge-green" style="margin-left:auto;font-size:10px;">Instant</span><div class="radio-dot"></div></div>
+          <div class="pay-option" onclick="selectPay(this)"><div class="pay-icon">🏦</div><div><div class="pay-name">Net Banking</div><div class="pay-desc">All major Indian banks</div></div><div class="radio-dot"></div></div>
+          <div class="pay-option" onclick="selectPay(this)"><div class="pay-icon">💳</div><div><div class="pay-name">Credit / Debit Card</div><div class="pay-desc">Visa · Mastercard · RuPay</div></div><div class="radio-dot"></div></div>
+          <div class="pay-option" onclick="selectPay(this)"><div class="pay-icon">📆</div><div><div class="pay-name">EMI</div><div class="pay-desc">3, 6, 12 month options</div></div><div class="radio-dot"></div></div>
+          <div class="form-group" style="margin-top:14px;"><label class="form-label">UPI ID</label><input class="form-input" type="text" placeholder="yourname@upi"></div>
+          <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px;">🔒 256-bit SSL encrypted · Secured by Razorpay</div>
+        </div>
+        <div class="card flex-col">
+          <div class="section-title mb-14">Bill Summary</div>
+          <div class="price-row"><span class="label">Rental (7d × 5 JCBs)</span><span class="value">₹3,04,500</span></div>
+          <div class="price-row"><span class="label">GST (18%)</span><span class="value">₹54,810</span></div>
+          <div class="price-row"><span class="label">Platform Fee (12%)</span><span class="value">₹36,540</span></div>
+          <div class="price-row total"><span class="label">Grand Total</span><span class="value">₹3,95,850</span></div>
+          <div class="advance-card" style="margin:16px 0;">
+            <div class="advance-label">Pay Now (30% Advance)</div>
+            <div class="advance-amount">₹1,18,755</div>
+            <div style="font-size:11px;color:var(--amber-dim);margin-top:3px;">Remaining ₹2,77,095 after dispatch confirmation</div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px;margin-top:auto;" onclick="doPayment()">🔒 Pay ₹1,18,755 Securely</button>
+          <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text-muted);">GST invoice auto-generated after payment</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success -->
+    <div class="step-content" id="step-success">
+      <div class="success-screen">
+        <div class="success-orb">🎉</div>
+        <div class="success-title">Booking Confirmed!</div>
+        <div class="text-secondary text-sm mb-20">Your heavy equipment has been booked. Our team is processing your request.</div>
+        <div class="booking-id-chip">🎫 BOOKING · HR-2072</div>
+        <div class="card" style="text-align:left;margin-bottom:16px;">
+          <div class="price-row"><span class="label">Booking ID</span><span class="value color-amber" style="font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1px;">#HR-2072</span></div>
+          <div class="price-row"><span class="label">Vehicles</span><span class="value">5× JCB Backhoe Loader</span></div>
+          <div class="price-row"><span class="label">Site</span><span class="value">Sector 45, Noida</span></div>
+          <div class="price-row"><span class="label">Period</span><span class="value">22–29 Jan 2025</span></div>
+          <div class="price-row"><span class="label">Advance Paid</span><span class="value color-green">₹1,18,755 ✓</span></div>
+        </div>
+        <div class="info-box mb-16">📱 Confirmation sent to +91 98765-43210 & rajesh@rcpl.in</div>
+        <button class="btn btn-primary" style="padding:11px 28px;" onclick="showPage('dashboard',document.querySelectorAll('.nav-item')[0])">Go to Dashboard →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ACTIVE RENTALS ===== -->
+  <div class="page" id="page-active">
+    <div class="section-hdr mb-16"><div class="section-title">Active Rentals</div><button class="btn btn-primary btn-sm" onclick="showPage('book',document.querySelectorAll('.nav-item')[1])">+ New Booking</button></div>
+    <div class="booking-card">
+      <div class="bk-header"><div><div class="bk-id">HR-2045 · 22 JAN – 29 JAN 2025</div><div class="bk-title">5× JCB Backhoe Loader — Sector 45, Noida</div></div><span class="badge badge-green pulse">Active</span></div>
+      <div class="bk-body">
+        <div class="flex gap-8 mb-12"><span class="badge badge-blue">🔵 3 Platform Fleet</span><span class="badge badge-orange">🟠 2 Supplier Network</span></div>
+        <div class="timeline-track mb-14">
+          <div class="tl-node"><div class="tl-circle done">✓</div><div class="tl-label done">Confirmed</div></div>
+          <div class="tl-connector done"></div>
+          <div class="tl-node"><div class="tl-circle done">✓</div><div class="tl-label done">Dispatched</div></div>
+          <div class="tl-connector active"></div>
+          <div class="tl-node"><div class="tl-circle active">⚙</div><div class="tl-label active">Active</div></div>
+          <div class="tl-connector pending"></div>
+          <div class="tl-node"><div class="tl-circle pending">◎</div><div class="tl-label">Wrapping up</div></div>
+          <div class="tl-connector pending"></div>
+          <div class="tl-node"><div class="tl-circle pending">◎</div><div class="tl-label">Completed</div></div>
+        </div>
+        <div class="grid-3">
+          <div class="stat-mini"><div class="stat-mini-icon" style="background:var(--amber-glow);">💰</div><div><div class="stat-mini-value">₹42.5K</div><div class="stat-mini-label">Per Day</div></div></div>
+          <div class="stat-mini"><div class="stat-mini-icon" style="background:var(--red-glow);">⏳</div><div><div class="stat-mini-value" style="color:var(--amber);">4</div><div class="stat-mini-label">Days Left</div></div></div>
+          <div class="stat-mini"><div class="stat-mini-icon" style="background:var(--blue-glow);">📄</div><div><div class="stat-mini-value">₹3.95L</div><div class="stat-mini-label">Total Value</div></div></div>
+        </div>
+      </div>
+      <div class="bk-footer"><button class="btn btn-ghost btn-sm">📄 Contract</button><button class="btn btn-secondary btn-sm">Extend Rental</button><button class="btn btn-danger btn-sm">⚠ Report Issue</button></div>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY ===== -->
+  <div class="page" id="page-history">
+    <div class="section-hdr mb-14">
+      <div class="section-title">Booking History</div>
+      <div class="flex gap-8">
+        <div class="topbar-search" style="width:190px;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width:14px;height:14px;color:var(--text-muted);flex-shrink:0;"><path stroke-linecap="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><input type="text" placeholder="Search..."></div>
+        <select class="form-input" style="width:130px;padding:7px 12px;"><option>All Status</option><option>Completed</option><option>Cancelled</option></select>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="data-table">
+        <thead><tr><th>Booking ID</th><th>Vehicles</th><th>Site</th><th>Duration</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td>#HR-2031</td><td>3× Tipper Truck</td><td>Gurgaon NH-48</td><td>10–24 Jan 2025</td><td>₹2,16,000</td><td><span class="badge badge-green">Completed</span></td><td><div class="flex gap-8"><button class="btn btn-ghost btn-xs">Invoice</button><button class="btn btn-secondary btn-xs">Rebook</button></div></td></tr>
+          <tr><td>#HR-2018</td><td>1× Mobile Crane</td><td>Faridabad</td><td>5–20 Dec 2024</td><td>₹4,50,000</td><td><span class="badge badge-green">Completed</span></td><td><div class="flex gap-8"><button class="btn btn-ghost btn-xs">Invoice</button><button class="btn btn-secondary btn-xs">Rebook</button></div></td></tr>
+          <tr><td>#HR-1997</td><td>8× JCB</td><td>Noida Extension</td><td>1–30 Nov 2024</td><td>₹20,40,000</td><td><span class="badge badge-green">Completed</span></td><td><div class="flex gap-8"><button class="btn btn-ghost btn-xs">Invoice</button><button class="btn btn-secondary btn-xs">Rebook</button></div></td></tr>
+          <tr><td>#HR-1982</td><td>2× Bulldozer</td><td>Greater Noida</td><td>15–20 Oct 2024</td><td>₹1,35,000</td><td><span class="badge badge-red">Cancelled</span></td><td><button class="btn btn-ghost btn-xs">Details</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== NOTIFICATIONS ===== -->
+  <div class="page" id="page-notifications">
+    <div class="section-hdr mb-14"><div class="section-title">Notifications</div><button class="btn btn-ghost btn-sm">Mark all read</button></div>
+    <div class="card">
+      <div class="notif-item unread"><div class="notif-icon" style="background:var(--blue-glow);">🚛</div><div style="flex:1;"><div class="notif-text">Your 5 JCBs for Sector 45 have been dispatched. Estimated arrival: 10:30 AM today.</div><div class="notif-time">2 min ago</div></div><div class="notif-unread-dot"></div></div>
+      <div class="notif-item unread"><div class="notif-icon" style="background:var(--amber-glow);">⏳</div><div style="flex:1;"><div class="notif-text">Rental #HR-2045 ends in 4 days. Extend now to avoid site disruption.</div><div class="notif-time">1 hr ago</div></div><button class="btn btn-secondary btn-xs" style="flex-shrink:0;">Extend</button></div>
+      <div class="notif-item unread"><div class="notif-icon" style="background:var(--green-glow);">✅</div><div style="flex:1;"><div class="notif-text">Payment of ₹1,18,755 confirmed for booking #HR-2072. GST invoice available.</div><div class="notif-time">3 hrs ago</div></div><div class="notif-unread-dot"></div></div>
+      <div class="notif-item"><div class="notif-icon" style="background:rgba(255,255,255,0.05);">📄</div><div><div class="notif-text">Digital contract for #HR-2072 ready. E-signature pending via Aadhaar OTP.</div><div class="notif-time">3 hrs ago</div></div></div>
+      <div class="notif-item"><div class="notif-icon" style="background:var(--amber-glow);">⭐</div><div><div class="notif-text">Booking #HR-2031 completed. Rate your experience to help us improve.</div><div class="notif-time">Yesterday, 6:00 PM</div></div></div>
+    </div>
+  </div>
+
+  <!-- ===== PROFILE ===== -->
+  <div class="page" id="page-profile">
+    <div class="grid-2">
+      <div>
+        <div class="card mb-14" style="padding:0;overflow:hidden;">
+          <div class="profile-cover"><div class="profile-avatar-lg">RK<div class="verified-check">✓</div></div></div>
+          <div style="padding:42px 20px 18px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:25px;letter-spacing:1px;color:var(--text-primary);margin-bottom:2px;">Rajesh Kumar</div>
+            <div class="text-secondary text-sm mb-12">Rajesh Constructions Pvt Ltd</div>
+            <div class="flex gap-8 mb-16"><span class="badge badge-green">✓ KYC Verified</span><span class="badge badge-blue">GST Registered</span></div>
+            <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" value="Rajesh Kumar"></div>
+            <div class="form-group"><label class="form-label">Mobile</label><input class="form-input" value="+91 98765-43210"></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" value="rajesh@rcpl.in"></div>
+            <div class="form-group"><label class="form-label">Business Name</label><input class="form-input" value="Rajesh Constructions Pvt Ltd"></div>
+            <div class="form-group"><label class="form-label">GSTIN</label><input class="form-input" value="09AABCR1234M1Z5"></div>
+            <button class="btn btn-primary" onclick="showToast('✅','Profile updated!','Changes saved successfully.')">Save Changes</button>
+          </div>
+        </div>
+      </div>
+      <div class="flex-col" style="gap:14px;">
+        <div class="card">
+          <div class="section-title mb-12">📊 Account Stats</div>
+          <div class="grid-2">
+            <div class="stat-mini"><div class="stat-mini-icon" style="background:var(--blue-glow);">📦</div><div><div class="stat-mini-value">28</div><div class="stat-mini-label">Total Bookings</div></div></div>
+            <div class="stat-mini"><div class="stat-mini-icon" style="background:var(--amber-glow);">💰</div><div><div class="stat-mini-value" style="color:var(--amber);">₹42L</div><div class="stat-mini-label">Total Spent</div></div></div>
+            <div class="stat-mini"><div class="stat-mini-icon" style="background:var(--green-glow);">⭐</div><div><div class="stat-mini-value" style="color:var(--green);">4.8</div><div class="stat-mini-label">Avg Rating</div></div></div>
+            <div class="stat-mini"><div class="stat-mini-icon" style="background:rgba(255,255,255,0.05);">📅</div><div><div class="stat-mini-value">2 yr</div><div class="stat-mini-label">Member Since</div></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title mb-12">📍 Saved Sites</div>
+          <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+            <div style="width:34px;height:34px;border-radius:9px;background:var(--amber-glow);display:flex;align-items:center;justify-content:center;font-size:16px;">📍</div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text-primary);">Sector 45, Noida</div><div class="text-xs text-muted">Metro Bridge Phase 2</div></div>
+            <span class="badge badge-amber" style="margin-left:auto;">Default</span>
+          </div>
+          <div style="padding:10px 0;display:flex;align-items:center;gap:10px;">
+            <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:16px;">📍</div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--text-primary);">Gurgaon NH-48</div><div class="text-xs text-muted">Highway Expansion</div></div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:8px;">+ Add New Site</button>
+        </div>
+        <div class="card">
+          <div class="section-title mb-10">🔒 Security</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);"><div><div class="text-sm font-bold">Two-Factor Auth</div><div class="text-xs text-muted">OTP on mobile</div></div><span class="badge badge-green">Enabled</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;"><div><div class="text-sm font-bold">Last Login</div><div class="text-xs text-muted">Today, 9:24 AM · Delhi</div></div><button class="btn btn-ghost btn-xs">View Log</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </main>
+</div>
+</div>
+
+<!-- Toast -->
+<div id="toast">
+  <div class="toast-icon-wrap" id="toast-icon-wrap" style="background:var(--green-glow);">✅</div>
+  <div><div class="toast-msg" id="toast-msg">Done</div><div class="toast-sub" id="toast-sub">Action completed</div></div>
+</div>
+
+<script>
+let currentStep = 1;
+let qty = 5;
+
+function showPage(name, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  const titles = { dashboard:'Dashboard', book:'New Booking', active:'Active Rentals', history:'Booking History', notifications:'Notifications', profile:'My Profile' };
+  document.getElementById('page-title').textContent = titles[name] || '';
+  if (name === 'book') { currentStep = 1; renderWizard(1); }
+}
+
+function goToStep(n) { currentStep = n; renderWizard(n); }
+
+function renderWizard(n) {
+  document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
+  const el = n > 5 ? document.getElementById('step-success') : document.getElementById('step-' + n);
+  if (el) el.classList.add('active');
+  for (let i = 1; i <= 5; i++) {
+    const c = document.getElementById('wc'+i), nm = document.getElementById('wn'+i), l = document.getElementById('wl'+i);
+    if (!c) continue;
+    if (i < n) { c.className = 'wz-circle done'; c.textContent = '✓'; nm.className = 'wz-name done'; }
+    else if (i === n) { c.className = 'wz-circle active'; c.textContent = i; nm.className = 'wz-name active'; }
+    else { c.className = 'wz-circle pending'; c.textContent = i; nm.className = 'wz-name'; }
+    if (l) l.className = i < n ? 'wz-line done' : i === n ? 'wz-line active' : 'wz-line';
+  }
+}
+
+function selectVehicle(el) {
+  document.querySelectorAll('.vehicle-cat-card').forEach(v => v.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function changeQty(d) {
+  qty = Math.max(1, qty + d);
+  document.getElementById('qty-display').textContent = qty;
+}
+
+function selDur(el) {
+  document.querySelectorAll('.dur-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function selectPay(el) {
+  document.querySelectorAll('.pay-option').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function doPayment() {
+  showToast('🔒','Processing payment...','Please wait');
+  setTimeout(() => showToast('✅','Payment successful!','₹1,18,755 confirmed via UPI'), 900);
+  setTimeout(() => { currentStep = 6; renderWizard(6); }, 1800);
+}
+
+function showToast(icon, msg, sub) {
+  document.getElementById('toast-icon-wrap').textContent = icon;
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-sub').textContent = sub;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove('show'), 3800);
+}
+</script>
+</body>
+</html>

@@ -1,1371 +1,787 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FleetOS — Fleet Management Platform</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Monthly Focus Tracker Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ── RESET & BASE ── */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#070d1a;
-  --bg2:#0d1626;
-  --bg3:#111e33;
-  --card:#0f1c2e;
-  --card2:#162035;
-  --border:#1e3050;
-  --border2:#243a5a;
-  --text:#e8f0fe;
-  --text2:#8fa8c8;
-  --text3:#4a6080;
-  --accent:#00d4ff;
-  --accent2:#0099cc;
-  --green:#00e896;
-  --green2:#00b870;
-  --orange:#ff8c42;
-  --red:#ff4757;
-  --yellow:#ffd32a;
-  --purple:#8b5cf6;
-  --font-display:'Syne',sans-serif;
-  --font-mono:'Space Mono',monospace;
-  --font-body:'IBM Plex Sans',sans-serif;
-}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+  :root {
+    --bg: #070B14;
+    --surface: #0D1526;
+    --border: #1E2D45;
+    --blue: #3B82F6;
+    --purple: #8B5CF6;
+    --gold: #F59E0B;
+    --green: #10B981;
+    --text: #E2E8F0;
+    --muted: #64748B;
+  }
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* ── LAYOUT ── */
-.app{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:240px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:relative;z-index:100}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0}
-.content{flex:1;overflow-y:auto;padding:24px}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-/* ── SIDEBAR ── */
-.logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
-.logo-text{font-family:var(--font-display);font-weight:800;font-size:20px;letter-spacing:-0.5px}
-.logo-text span{color:var(--accent)}
-.logo-sub{font-family:var(--font-mono);font-size:9px;color:var(--text3);letter-spacing:2px;margin-top:2px}
-.nav{padding:16px 12px;flex:1}
-.nav-section{font-family:var(--font-mono);font-size:9px;color:var(--text3);letter-spacing:2px;padding:8px 8px 6px;margin-top:8px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:all .15s;color:var(--text2);font-size:13px;font-weight:500;position:relative}
-.nav-item:hover{background:var(--bg3);color:var(--text)}
-.nav-item.active{background:linear-gradient(135deg,rgba(0,212,255,.15),rgba(0,153,204,.08));color:var(--accent);border:1px solid rgba(0,212,255,.2)}
-.nav-item .icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:7px;font-size:14px;flex-shrink:0}
-.nav-item.active .icon{background:rgba(0,212,255,.15)}
-.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-family:var(--font-mono);padding:2px 6px;border-radius:10px}
-.nav-badge.green{background:var(--green2)}
-.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
-.user-card{display:flex;align-items:center;gap:10px}
-.user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
-.user-name{font-size:13px;font-weight:600}
-.user-role{font-size:11px;color:var(--text3)}
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 50% at 20% 20%, rgba(59,130,246,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,0.07) 0%, transparent 60%);
+    pointer-events: none;
+  }
 
-/* ── TOPBAR ── */
-.page-title{font-family:var(--font-display);font-size:16px;font-weight:700;flex:1}
-.topbar-stats{display:flex;gap:20px}
-.topbar-stat{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
-.topbar-stat .dot{width:7px;height:7px;border-radius:50%}
-.topbar-stat .dot.green{background:var(--green);box-shadow:0 0 6px var(--green)}
-.topbar-stat .dot.red{background:var(--red)}
-.topbar-stat .dot.yellow{background:var(--yellow)}
-.topbar-actions{display:flex;gap:8px}
-.btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:var(--font-body);transition:all .15s}
-.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000}
-.btn-primary:hover{opacity:.85;transform:translateY(-1px)}
-.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  .wrap { max-width: 700px; margin: 0 auto; padding: 40px 20px 80px; }
 
-/* ── PAGE SECTIONS ── */
-.page{display:none;animation:fadeIn .3s ease}
-.page.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  /* Header */
+  .header { text-align: center; margin-bottom: 48px; }
+  .badge {
+    display: inline-block;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: var(--gold);
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    padding: 5px 16px; border-radius: 99px;
+    margin-bottom: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 6vw, 46px);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #E2E8F0 0%, #3B82F6 50%, #8B5CF6 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+  .subtitle { color: var(--muted); font-size: 14px; line-height: 1.6; }
 
-/* ── STAT CARDS ── */
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.stat-card.blue::before{background:linear-gradient(90deg,var(--accent),transparent)}
-.stat-card.green::before{background:linear-gradient(90deg,var(--green),transparent)}
-.stat-card.orange::before{background:linear-gradient(90deg,var(--orange),transparent)}
-.stat-card.red::before{background:linear-gradient(90deg,var(--red),transparent)}
-.stat-card:hover{border-color:var(--border2);transform:translateY(-2px)}
-.stat-label{font-size:11px;color:var(--text3);font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase}
-.stat-val{font-family:var(--font-display);font-size:32px;font-weight:800;margin:6px 0 4px;letter-spacing:-1px}
-.stat-val.blue{color:var(--accent)}
-.stat-val.green{color:var(--green)}
-.stat-val.orange{color:var(--orange)}
-.stat-val.red{color:var(--red)}
-.stat-change{font-size:11px;color:var(--text3)}
-.stat-change span{color:var(--green)}
-.stat-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:28px;opacity:.12}
+  /* Month selector card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59,130,246,0.4), transparent);
+  }
 
-/* ── GRID LAYOUTS ── */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px}
-.grid-7-3{display:grid;grid-template-columns:7fr 3fr;gap:16px;margin-bottom:24px}
-.grid-6-4{display:grid;grid-template-columns:6fr 4fr;gap:16px;margin-bottom:24px}
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700;
+    color: var(--blue);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 20px;
+  }
 
-/* ── CARDS ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
-.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-title{font-family:var(--font-display);font-size:14px;font-weight:700}
-.card-body{padding:20px}
-.card-badge{font-family:var(--font-mono);font-size:10px;padding:3px 8px;border-radius:6px;letter-spacing:.5px}
-.card-badge.live{background:rgba(0,232,150,.15);color:var(--green);border:1px solid rgba(0,232,150,.3)}
-.card-badge.info{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.25)}
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
 
-/* ── MAP PLACEHOLDER ── */
-.map-container{position:relative;background:var(--bg);height:380px;overflow:hidden}
-.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);background-size:40px 40px}
-.map-roads{position:absolute;inset:0}
-.map-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--text3);letter-spacing:2px}
-.map-overlay{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:8px}
-.map-btn{background:var(--card2);border:1px solid var(--border2);border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--text2);transition:all .15s}
-.map-btn:hover{border-color:var(--accent);color:var(--accent)}
-.map-filters{position:absolute;top:12px;right:12px;display:flex;gap:6px}
-.map-filter-btn{background:var(--card2);border:1px solid var(--border2);padding:5px 10px;border-radius:6px;font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;font-family:var(--font-mono)}
-.map-filter-btn.active{background:rgba(0,212,255,.15);border-color:var(--accent);color:var(--accent)}
-/* Vehicle dots on map */
-.v-dot{position:absolute;width:10px;height:10px;border-radius:50%;cursor:pointer;transition:all .3s}
-.v-dot.moving{background:var(--green);box-shadow:0 0 0 3px rgba(0,232,150,.25),0 0 12px rgba(0,232,150,.5);animation:pulse 2s infinite}
-.v-dot.idle{background:var(--yellow);box-shadow:0 0 0 3px rgba(255,211,42,.25)}
-.v-dot.stopped{background:var(--red);box-shadow:0 0 0 3px rgba(255,71,87,.25)}
-.v-dot.offline{background:var(--text3)}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(0,232,150,.25),0 0 12px rgba(0,232,150,.5)}50%{box-shadow:0 0 0 6px rgba(0,232,150,.1),0 0 20px rgba(0,232,150,.3)}}
-.v-tooltip{position:absolute;background:var(--bg2);border:1px solid var(--border2);padding:8px 12px;border-radius:8px;font-size:11px;white-space:nowrap;pointer-events:none;transform:translate(-50%,-120%);opacity:0;transition:opacity .15s;z-index:10}
-.v-dot:hover .v-tooltip{opacity:1}
-.v-tooltip-no{font-family:var(--font-mono);color:var(--accent);font-size:10px}
-.v-tooltip-speed{color:var(--green);font-size:12px;font-weight:600}
-/* map bottom info */
-.map-legend{position:absolute;bottom:12px;left:12px;display:flex;gap:12px;background:rgba(7,13,26,.8);backdrop-filter:blur(10px);padding:8px 14px;border-radius:8px;border:1px solid var(--border)}
-.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
-.legend-dot{width:8px;height:8px;border-radius:50%}
+  .field { flex: 1; min-width: 140px; }
+  .field label {
+    display: block; font-size: 11px; color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  select, input[type="text"] {
+    width: 100%; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+    color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px;
+    outline: none; transition: border 0.2s;
+    appearance: none; -webkit-appearance: none;
+    cursor: pointer;
+  }
+  select:focus, input[type="text"]:focus { border-color: var(--blue); }
+  select option { background: #1E293B; }
 
-/* ── VEHICLE TABLE ── */
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-thead th{text-align:left;padding:10px 14px;font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg2)}
-tbody tr{border-bottom:1px solid rgba(30,48,80,.5);transition:background .15s;cursor:pointer}
-tbody tr:hover{background:rgba(14,28,50,.7)}
-tbody td{padding:11px 14px;color:var(--text)}
-.status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--font-mono)}
-.status-badge.moving{background:rgba(0,232,150,.12);color:var(--green);border:1px solid rgba(0,232,150,.25)}
-.status-badge.idle{background:rgba(255,211,42,.1);color:var(--yellow);border:1px solid rgba(255,211,42,.2)}
-.status-badge.stopped{background:rgba(255,71,87,.1);color:var(--red);border:1px solid rgba(255,71,87,.2)}
-.status-badge.offline{background:rgba(74,96,128,.15);color:var(--text3);border:1px solid var(--border)}
-.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
-.speed-bar{display:flex;align-items:center;gap:8px}
-.speed-track{width:60px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
-.speed-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),var(--accent))}
-.vehicle-no{font-family:var(--font-mono);color:var(--accent);font-size:11px}
-.pkg-tag{font-size:10px;padding:2px 7px;border-radius:4px;font-family:var(--font-mono)}
-.pkg-tag.enterprise{background:rgba(139,92,246,.15);color:var(--purple);border:1px solid rgba(139,92,246,.3)}
-.pkg-tag.premium{background:rgba(255,140,66,.15);color:var(--orange);border:1px solid rgba(255,140,66,.3)}
-.pkg-tag.standard{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2)}
-.pkg-tag.basic{background:rgba(74,96,128,.15);color:var(--text3);border:1px solid var(--border)}
-.fuel-bar{display:flex;align-items:center;gap:6px}
-.fuel-track{width:50px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
-.fuel-fill{height:100%;border-radius:3px}
-.fuel-fill.high{background:var(--green)}
-.fuel-fill.mid{background:var(--yellow)}
-.fuel-fill.low{background:var(--red)}
+  /* Goal tags */
+  .goals-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px; margin-top: 4px;
+  }
+  .goal-tag {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 12px; cursor: pointer;
+    transition: all 0.2s; user-select: none;
+  }
+  .goal-tag:hover { border-color: var(--blue); background: rgba(59,130,246,0.06); }
+  .goal-tag.active { border-color: var(--blue); background: rgba(59,130,246,0.12); }
+  .goal-tag.active .dot { background: var(--blue); }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); transition: background 0.2s; flex-shrink: 0;
+  }
+  .goal-tag span { font-size: 12px; color: var(--text); }
+  .goal-emoji { font-size: 14px; }
 
-/* ── ALERTS ── */
-.alert-list{display:flex;flex-direction:column;gap:8px}
-.alert-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg3);border-radius:10px;border-left:3px solid;cursor:pointer;transition:all .15s}
-.alert-item:hover{background:var(--bg2)}
-.alert-item.critical{border-color:var(--red)}
-.alert-item.warning{border-color:var(--orange)}
-.alert-item.info{border-color:var(--accent)}
-.alert-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.alert-item.critical .alert-icon{background:rgba(255,71,87,.15)}
-.alert-item.warning .alert-icon{background:rgba(255,140,66,.15)}
-.alert-item.info .alert-icon{background:rgba(0,212,255,.1)}
-.alert-title{font-size:12.5px;font-weight:600}
-.alert-sub{font-size:11px;color:var(--text3);margin-top:2px}
-.alert-time{font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-left:auto;flex-shrink:0}
+  /* Custom goal input */
+  .custom-goal { display: flex; gap: 10px; margin-top: 12px; }
+  .custom-goal input {
+    flex: 1; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 14px; color: var(--text);
+    font-family: 'DM Mono', monospace; font-size: 13px; outline: none;
+  }
+  .custom-goal input:focus { border-color: var(--purple); }
+  .add-btn {
+    background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.4);
+    color: var(--purple); border-radius: 10px; padding: 8px 16px;
+    cursor: pointer; font-size: 13px; font-family: 'DM Mono', monospace;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .add-btn:hover { background: rgba(139,92,246,0.25); }
 
-/* ── MINI CHARTS ── */
-.sparkline{display:flex;align-items:flex-end;gap:3px;height:40px}
-.spark-bar{flex:1;border-radius:2px 2px 0 0;transition:all .3s;min-height:4px}
-.spark-bar.accent{background:var(--accent)}
-.spark-bar.green{background:var(--green)}
-.spark-bar.orange{background:var(--orange)}
+  /* Generate button */
+  .gen-btn {
+    width: 100%; padding: 18px;
+    background: linear-gradient(135deg, #2563EB, #7C3AED);
+    border: none; border-radius: 14px;
+    color: white; font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 800;
+    cursor: pointer; letter-spacing: 1px;
+    transition: all 0.3s; position: relative; overflow: hidden;
+    margin-top: 8px;
+  }
+  .gen-btn::before {
+    content: '';
+    position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.4s;
+  }
+  .gen-btn:hover::before { left: 100%; }
+  .gen-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59,130,246,0.4); }
+  .gen-btn:active { transform: translateY(0); }
+  .gen-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-/* ── VEHICLE DETAIL PANEL ── */
-.detail-panel{display:none;position:fixed;top:0;right:0;width:380px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);z-index:200;overflow-y:auto;transform:translateX(100%);transition:transform .3s ease}
-.detail-panel.open{transform:translateX(0)}
-.panel-header{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1}
-.panel-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s}
-.panel-close:hover{border-color:var(--red);color:var(--red)}
-.panel-body{padding:20px}
-.data-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(30,48,80,.5)}
-.data-row:last-child{border-bottom:none}
-.data-key{font-size:12px;color:var(--text3);font-family:var(--font-mono)}
-.data-val{font-size:13px;font-weight:600}
-.data-val.green{color:var(--green)}
-.data-val.accent{color:var(--accent)}
-.data-val.red{color:var(--red)}
-.data-val.yellow{color:var(--yellow)}
-.section-label{font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid rgba(0,212,255,.15)}
-.sensor-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-.sensor-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px}
-.sensor-label{font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:4px}
-.sensor-val{font-size:18px;font-weight:700;font-family:var(--font-display)}
-.sensor-unit{font-size:10px;color:var(--text3);margin-left:3px}
-.sensor-val.green{color:var(--green)}
-.sensor-val.accent{color:var(--accent)}
-.sensor-val.orange{color:var(--orange)}
-.sensor-val.yellow{color:var(--yellow)}
+  /* Progress */
+  .progress-wrap { margin-top: 20px; display: none; }
+  .progress-wrap.show { display: block; }
+  .progress-bar-bg {
+    background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: 10px;
+  }
+  .progress-bar {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--blue), var(--purple));
+    border-radius: 99px; transition: width 0.3s ease;
+  }
+  .progress-text { font-size: 12px; color: var(--muted); text-align: center; }
 
-/* ── FUEL PAGE ── */
-.fuel-gauge{width:100%;height:160px;position:relative;display:flex;align-items:center;justify-content:center}
-.gauge-arc{position:relative;width:140px;height:80px;overflow:hidden}
-.gauge-bg{position:absolute;bottom:0;width:140px;height:140px;border-radius:50%;border:14px solid var(--bg3);clip-path:inset(0 0 50% 0)}
-.gauge-fill{position:absolute;bottom:0;width:140px;height:140px;border-radius:50%;border:14px solid var(--green);clip-path:inset(0 0 50% 0);transform-origin:center bottom}
-.gauge-val{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--green)}
-.fuel-history{display:flex;align-items:flex-end;gap:2px;height:60px;margin-top:12px}
-.fh-bar{flex:1;border-radius:2px 2px 0 0;background:var(--accent);opacity:.6;min-height:4px;transition:opacity .2s}
-.fh-bar:hover{opacity:1}
+  /* Success */
+  .success {
+    display: none; text-align: center;
+    background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 14px; padding: 24px; margin-top: 16px;
+  }
+  .success.show { display: block; animation: fadeIn 0.4s ease; }
+  .success-icon { font-size: 40px; margin-bottom: 12px; }
+  .success h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--green); margin-bottom: 6px; }
+  .success p { font-size: 13px; color: var(--muted); }
 
-/* ── DRIVER SCORE ── */
-.score-ring{position:relative;width:80px;height:80px}
-.score-ring svg{transform:rotate(-90deg)}
-.score-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
-.score-num{font-family:var(--font-display);font-size:18px;font-weight:800}
-.score-lbl{font-size:9px;color:var(--text3);font-family:var(--font-mono)}
-.driver-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(30,48,80,.4)}
-.driver-row:last-child{border-bottom:none}
-.driver-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
-.driver-name{font-size:13px;font-weight:600}
-.driver-meta{font-size:11px;color:var(--text3)}
-.score-pill{padding:3px 10px;border-radius:20px;font-family:var(--font-mono);font-size:12px;font-weight:700;margin-left:auto}
-.score-pill.great{background:rgba(0,232,150,.15);color:var(--green)}
-.score-pill.good{background:rgba(0,212,255,.12);color:var(--accent)}
-.score-pill.warn{background:rgba(255,211,42,.12);color:var(--yellow)}
-.score-pill.bad{background:rgba(255,71,87,.12);color:var(--red)}
+  /* Sheet info */
+  .sheets-info {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px;
+  }
+  .sheet-chip {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+  }
+  .sheet-chip .icon { font-size: 18px; }
+  .sheet-chip .info { display: flex; flex-direction: column; }
+  .sheet-chip .name { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--text); }
+  .sheet-chip .desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
-/* ── GEOFENCE PAGE ── */
-.zone-list{display:flex;flex-direction:column;gap:8px}
-.zone-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:all .15s}
-.zone-item:hover{border-color:var(--border2)}
-.zone-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px}
-.zone-name{font-size:13px;font-weight:600}
-.zone-meta{font-size:11px;color:var(--text3);margin-top:2px}
-.zone-status{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
-
-/* ── TOGGLE ── */
-.toggle{position:relative;width:36px;height:20px;cursor:pointer}
-.toggle input{opacity:0;width:0;height:0}
-.toggle-track{position:absolute;inset:0;background:var(--bg3);border-radius:10px;transition:.3s;border:1px solid var(--border2)}
-.toggle input:checked + .toggle-track{background:var(--green2);border-color:var(--green2)}
-.toggle-thumb{position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;left:2px;transition:.3s}
-.toggle input:checked ~ .toggle-thumb{transform:translateX(16px)}
-
-/* ── REPORTS PAGE ── */
-.report-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s}
-.report-card:hover{border-color:var(--accent);transform:translateY(-2px)}
-.report-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
-.report-name{font-size:13px;font-weight:700;margin-bottom:4px}
-.report-desc{font-size:11px;color:var(--text3);line-height:1.5}
-.report-formats{display:flex;gap:4px;margin-top:10px}
-.fmt-tag{font-size:9px;padding:2px 6px;border-radius:4px;font-family:var(--font-mono);background:var(--bg2);border:1px solid var(--border2);color:var(--text3)}
-
-/* ── DEVICE MANAGEMENT ── */
-.device-status{display:flex;align-items:center;gap:6px;font-size:12px}
-.signal-bars{display:flex;align-items:flex-end;gap:2px;height:14px}
-.signal-bar{width:3px;border-radius:1px;background:var(--border2)}
-.signal-bar.active{background:var(--green)}
-
-/* ── SETTINGS ── */
-.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(30,48,80,.4)}
-.setting-row:last-child{border-bottom:none}
-.setting-info{}
-.setting-name{font-size:13px;font-weight:600;margin-bottom:3px}
-.setting-desc{font-size:11px;color:var(--text3)}
-
-/* ── NOTIFICATION DOT ── */
-.notif-btn{position:relative;width:34px;height:34px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .15s}
-.notif-btn:hover{border-color:var(--accent)}
-.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid var(--bg2)}
-
-/* ── SEARCH ── */
-.search-box{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;flex:1;max-width:280px}
-.search-box input{background:transparent;border:none;outline:none;color:var(--text);font-size:12.5px;font-family:var(--font-body);flex:1}
-.search-box input::placeholder{color:var(--text3)}
-.search-icon{color:var(--text3);font-size:13px}
-
-/* ── PROGRESS ── */
-.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.progress-label{font-size:12px;color:var(--text2);width:100px;flex-shrink:0}
-.progress-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
-.progress-fill{height:100%;border-radius:3px}
-.progress-val{font-size:11px;color:var(--text3);font-family:var(--font-mono);width:35px;text-align:right}
-
-/* ── TABS ── */
-.tabs{display:flex;gap:4px;background:var(--bg3);padding:4px;border-radius:10px;margin-bottom:20px}
-.tab{padding:7px 16px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--text3);transition:all .15s;font-family:var(--font-body)}
-.tab.active{background:var(--card2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.tab:hover:not(.active){color:var(--text2)}
-
-/* ── PACKAGE DISTRIBUTION ── */
-.pkg-dist{display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden;margin:10px 0}
-.pkg-seg{height:100%;transition:width .5s ease}
-
-/* ── MINI MAP FOR DETAIL ── */
-.mini-map{height:120px;background:var(--bg);border-radius:10px;position:relative;overflow:hidden;margin-bottom:12px}
-.mini-map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,212,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.06) 1px,transparent 1px);background-size:20px 20px}
-.mini-map-dot{position:absolute;top:50%;left:55%;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(0,212,255,.2),0 0 16px rgba(0,212,255,.4);transform:translate(-50%,-50%);animation:pulse 2s infinite}
-.mini-map-trail{position:absolute;top:35%;left:30%;width:40%;height:2px;background:linear-gradient(90deg,transparent,rgba(0,212,255,.3),var(--accent));border-radius:1px}
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
+<div class="wrap">
 
-<div class="app">
-
-<!-- ── SIDEBAR ── -->
-<aside class="sidebar">
-  <div class="logo">
-    <div class="logo-text">Fleet<span>OS</span></div>
-    <div class="logo-sub">FLEET MANAGEMENT v1.0</div>
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">Monthly Generator</div>
+    <h1>Focus Tracker<br>Excel Generator</h1>
+    <p class="subtitle">Har mahine ek fresh Excel — sirf 2 click mein.<br>Apne goals set karo, download karo, print karo. 🔥</p>
   </div>
-  <nav class="nav">
-    <div class="nav-section">MAIN</div>
-    <div class="nav-item active" onclick="showPage('dashboard',this)">
-      <div class="icon">📊</div>Dashboard
-    </div>
-    <div class="nav-item" onclick="showPage('livemap',this)">
-      <div class="icon">🗺️</div>Live Map
-      <span class="nav-badge green">LIVE</span>
-    </div>
-    <div class="nav-item" onclick="showPage('vehicles',this)">
-      <div class="icon">🚛</div>Vehicles
-    </div>
-    <div class="nav-section">MONITORING</div>
-    <div class="nav-item" onclick="showPage('fuel',this)">
-      <div class="icon">⛽</div>Fuel Monitor
-    </div>
-    <div class="nav-item" onclick="showPage('drivers',this)">
-      <div class="icon">👤</div>Drivers
-    </div>
-    <div class="nav-item" onclick="showPage('geofence',this)">
-      <div class="icon">📍</div>Geofences
-    </div>
-    <div class="nav-item" onclick="showPage('alerts',this)">
-      <div class="icon">🔔</div>Alerts
-      <span class="nav-badge">7</span>
-    </div>
-    <div class="nav-section">ANALYTICS</div>
-    <div class="nav-item" onclick="showPage('reports',this)">
-      <div class="icon">📈</div>Reports
-    </div>
-    <div class="nav-item" onclick="showPage('devices',this)">
-      <div class="icon">📡</div>Devices
-    </div>
-    <div class="nav-section">SYSTEM</div>
-    <div class="nav-item" onclick="showPage('companies',this)">
-      <div class="icon">🏢</div>Companies
-    </div>
-    <div class="nav-item" onclick="showPage('settings',this)">
-      <div class="icon">⚙️</div>Settings
-    </div>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="user-card">
-      <div class="user-avatar">AH</div>
-      <div>
-        <div class="user-name">Ahmed Hassan</div>
-        <div class="user-role">Super Admin</div>
+
+  <!-- Step 1: Month & Year -->
+  <div class="card">
+    <div class="card-title">01 — Mahina aur Saal chuno</div>
+    <div class="row">
+      <div class="field">
+        <label>Mahina</label>
+        <select id="monthSel"></select>
+      </div>
+      <div class="field">
+        <label>Saal</label>
+        <select id="yearSel"></select>
+      </div>
+      <div class="field">
+        <label>Apna Naam</label>
+        <input type="text" id="userName" placeholder="Jaise: Rahul" value="">
       </div>
     </div>
   </div>
-</aside>
 
-<!-- ── MAIN ── -->
-<div class="main">
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="page-title" id="page-title">Dashboard Overview</div>
-    <div class="topbar-stats">
-      <div class="topbar-stat"><div class="dot green"></div>4,218 Online</div>
-      <div class="topbar-stat"><div class="dot yellow"></div>312 Idle</div>
-      <div class="topbar-stat"><div class="dot red"></div>89 Offline</div>
-    </div>
-    <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Search vehicle, driver...">
-    </div>
-    <div class="topbar-actions">
-      <div class="notif-btn">🔔<div class="notif-dot"></div></div>
-      <button class="btn btn-primary">+ Add Vehicle</button>
+  <!-- Step 2: Goals -->
+  <div class="card">
+    <div class="card-title">02 — Apne Goals chuno</div>
+    <div class="goals-grid" id="goalsGrid"></div>
+    <div class="custom-goal">
+      <input type="text" id="customGoalInput" placeholder="Naya goal likho (jaise: Node.js)">
+      <button class="add-btn" onclick="addCustomGoal()">+ Add</button>
     </div>
   </div>
 
-  <!-- CONTENT -->
-  <div class="content">
-
-    <!-- ════ DASHBOARD ════ -->
-    <div class="page active" id="page-dashboard">
-      <div class="stat-grid">
-        <div class="stat-card blue" onclick="showPage('vehicles',document.querySelector('[onclick*=vehicles]'))">
-          <div class="stat-label">Total Vehicles</div>
-          <div class="stat-val blue">5,284</div>
-          <div class="stat-change"><span>↑ 48</span> this month</div>
-          <div class="stat-icon">🚛</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-label">Active Now</div>
-          <div class="stat-val green">4,218</div>
-          <div class="stat-change"><span>79.8%</span> of fleet</div>
-          <div class="stat-icon">✅</div>
-        </div>
-        <div class="stat-card orange" onclick="showPage('alerts',document.querySelector('[onclick*=alerts]'))">
-          <div class="stat-label">Alerts Today</div>
-          <div class="stat-val orange">143</div>
-          <div class="stat-change">7 <span style="color:var(--red)">critical</span></div>
-          <div class="stat-icon">⚠️</div>
-        </div>
-        <div class="stat-card red">
-          <div class="stat-label">Offline Devices</div>
-          <div class="stat-val red">89</div>
-          <div class="stat-change" style="color:var(--red)">↑ 12 from yesterday</div>
-          <div class="stat-icon">📡</div>
-        </div>
-      </div>
-
-      <div class="grid-7-3">
-        <!-- Live Map Preview -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Live Fleet Map</div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <span class="card-badge live">● LIVE</span>
-              <button class="btn btn-ghost" onclick="showPage('livemap',document.querySelector('[onclick*=livemap]'))">Full Map →</button>
-            </div>
-          </div>
-          <div class="map-container">
-            <div class="map-grid"></div>
-            <svg class="map-roads" viewBox="0 0 700 380" style="position:absolute;inset:0;opacity:.15">
-              <path d="M0,190 Q175,150 350,190 Q525,230 700,190" stroke="#00d4ff" stroke-width="2" fill="none"/>
-              <path d="M350,0 Q380,190 350,380" stroke="#00d4ff" stroke-width="1.5" fill="none"/>
-              <path d="M0,100 Q250,120 400,80 Q550,40 700,100" stroke="#4a6080" stroke-width="1" fill="none"/>
-              <path d="M0,280 Q200,260 400,300 Q550,330 700,280" stroke="#4a6080" stroke-width="1" fill="none"/>
-              <path d="M120,0 Q140,190 120,380" stroke="#4a6080" stroke-width="1" fill="none"/>
-              <path d="M560,0 Q540,190 560,380" stroke="#4a6080" stroke-width="1" fill="none"/>
-            </svg>
-            <!-- Vehicle dots -->
-            <div class="v-dot moving" style="left:18%;top:42%"><div class="v-tooltip"><div class="v-tooltip-no">8950-BGB</div><div class="v-tooltip-speed">106 km/h</div></div></div>
-            <div class="v-dot moving" style="left:28%;top:55%"><div class="v-tooltip"><div class="v-tooltip-no">4521-KAD</div><div class="v-tooltip-speed">87 km/h</div></div></div>
-            <div class="v-dot moving" style="left:45%;top:35%"><div class="v-tooltip"><div class="v-tooltip-no">7782-LMR</div><div class="v-tooltip-speed">94 km/h</div></div></div>
-            <div class="v-dot idle" style="left:55%;top:62%"><div class="v-tooltip"><div class="v-tooltip-no">2341-FBX</div><div class="v-tooltip-speed">Idle</div></div></div>
-            <div class="v-dot moving" style="left:65%;top:28%"><div class="v-tooltip"><div class="v-tooltip-no">9901-QRZ</div><div class="v-tooltip-speed">112 km/h</div></div></div>
-            <div class="v-dot stopped" style="left:72%;top:70%"><div class="v-tooltip"><div class="v-tooltip-no">3318-WXT</div><div class="v-tooltip-speed">Stopped</div></div></div>
-            <div class="v-dot offline" style="left:82%;top:45%"><div class="v-tooltip"><div class="v-tooltip-no">6643-NVP</div><div class="v-tooltip-speed">Offline</div></div></div>
-            <div class="v-dot moving" style="left:38%;top:70%"><div class="v-tooltip"><div class="v-tooltip-no">1127-DKM</div><div class="v-tooltip-speed">76 km/h</div></div></div>
-            <div class="v-dot idle" style="left:10%;top:70%"><div class="v-tooltip"><div class="v-tooltip-no">5584-PKA</div><div class="v-tooltip-speed">Idle</div></div></div>
-            <div class="map-overlay">
-              <div class="map-btn">+</div>
-              <div class="map-btn">−</div>
-              <div class="map-btn">⊕</div>
-            </div>
-            <div class="map-legend">
-              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Moving</div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Idle</div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Stopped</div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--text3)"></div>Offline</div>
-            </div>
-          </div>
-        </div>
-        <!-- Alerts Summary -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">Recent Alerts</div>
-            <button class="btn btn-ghost" onclick="showPage('alerts',document.querySelector('[onclick*=alerts]'))">All →</button>
-          </div>
-          <div class="card-body" style="padding:12px">
-            <div class="alert-list">
-              <div class="alert-item critical">
-                <div class="alert-icon">⚠️</div>
-                <div>
-                  <div class="alert-title">Fuel Theft Detected</div>
-                  <div class="alert-sub">Vehicle 8950-BGB · −18L</div>
-                </div>
-                <div class="alert-time">2m ago</div>
-              </div>
-              <div class="alert-item warning">
-                <div class="alert-icon">🚀</div>
-                <div>
-                  <div class="alert-title">Speeding</div>
-                  <div class="alert-sub">4521-KAD · 134 km/h</div>
-                </div>
-                <div class="alert-time">8m ago</div>
-              </div>
-              <div class="alert-item warning">
-                <div class="alert-icon">📍</div>
-                <div>
-                  <div class="alert-title">Geofence Exit</div>
-                  <div class="alert-sub">7782-LMR · Zone A-12</div>
-                </div>
-                <div class="alert-time">14m ago</div>
-              </div>
-              <div class="alert-item info">
-                <div class="alert-icon">📡</div>
-                <div>
-                  <div class="alert-title">Device Offline</div>
-                  <div class="alert-sub">6643-NVP · No signal</div>
-                </div>
-                <div class="alert-time">32m ago</div>
-              </div>
-              <div class="alert-item critical">
-                <div class="alert-icon">🆘</div>
-                <div>
-                  <div class="alert-title">Panic Button</div>
-                  <div class="alert-sub">Driver: Khalid M.</div>
-                </div>
-                <div class="alert-time">1h ago</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid-3">
-        <!-- Fuel Overview -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">Fleet Fuel Status</div><span class="card-badge info">TODAY</span></div>
-          <div class="card-body">
-            <div style="margin-bottom:12px">
-              <div class="progress-row"><div class="progress-label">Above 75%</div><div class="progress-track"><div class="progress-fill" style="width:42%;background:var(--green)"></div></div><div class="progress-val">2,219</div></div>
-              <div class="progress-row"><div class="progress-label">50–75%</div><div class="progress-track"><div class="progress-fill" style="width:28%;background:var(--accent)"></div></div><div class="progress-val">1,480</div></div>
-              <div class="progress-row"><div class="progress-label">25–50%</div><div class="progress-track"><div class="progress-fill" style="width:18%;background:var(--yellow)"></div></div><div class="progress-val">951</div></div>
-              <div class="progress-row"><div class="progress-label">Below 25%</div><div class="progress-track"><div class="progress-fill" style="width:12%;background:var(--red)"></div></div><div class="progress-val">634</div></div>
-            </div>
-            <div style="font-size:11px;color:var(--text3);font-family:var(--font-mono)">AVG FUEL LEVEL: <span style="color:var(--accent)">61.4%</span></div>
-          </div>
-        </div>
-        <!-- Driver Scores -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">Top Drivers</div><button class="btn btn-ghost" onclick="showPage('drivers',document.querySelector('[onclick*=drivers]'))">All →</button></div>
-          <div class="card-body" style="padding:12px 20px">
-            <div class="driver-row">
-              <div class="driver-avatar" style="background:linear-gradient(135deg,#00e896,#00b870)">KM</div>
-              <div><div class="driver-name">Khalid Mansoor</div><div class="driver-meta">8950-BGB · 12,400 km</div></div>
-              <div class="score-pill great">97</div>
-            </div>
-            <div class="driver-row">
-              <div class="driver-avatar" style="background:linear-gradient(135deg,#00d4ff,#0099cc)">FA</div>
-              <div><div class="driver-name">Fahad Al-Rashid</div><div class="driver-meta">4521-KAD · 9,820 km</div></div>
-              <div class="score-pill good">88</div>
-            </div>
-            <div class="driver-row">
-              <div class="driver-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)">MH</div>
-              <div><div class="driver-name">Mohammed Hassan</div><div class="driver-meta">7782-LMR · 8,100 km</div></div>
-              <div class="score-pill warn">74</div>
-            </div>
-            <div class="driver-row">
-              <div class="driver-avatar" style="background:linear-gradient(135deg,#ff4757,#c0392b)">SA</div>
-              <div><div class="driver-name">Sami Al-Otaibi</div><div class="driver-meta">3318-WXT · 5,640 km</div></div>
-              <div class="score-pill bad">52</div>
-            </div>
-          </div>
-        </div>
-        <!-- Package Distribution -->
-        <div class="card">
-          <div class="card-header"><div class="card-title">Package Distribution</div></div>
-          <div class="card-body">
-            <div class="pkg-dist">
-              <div class="pkg-seg" style="width:18%;background:var(--purple)"></div>
-              <div class="pkg-seg" style="width:32%;background:var(--orange)"></div>
-              <div class="pkg-seg" style="width:28%;background:var(--accent)"></div>
-              <div class="pkg-seg" style="width:22%;background:var(--text3)"></div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
-              <div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:2px;background:var(--purple)"></div><span style="font-size:12px">Enterprise</span></div><span style="font-family:var(--font-mono);font-size:12px;color:var(--text3)">951 <span style="color:var(--purple)">18%</span></span></div>
-              <div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:2px;background:var(--orange)"></div><span style="font-size:12px">Premium</span></div><span style="font-family:var(--font-mono);font-size:12px;color:var(--text3)">1,691 <span style="color:var(--orange)">32%</span></span></div>
-              <div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:2px;background:var(--accent)"></div><span style="font-size:12px">Standard</span></div><span style="font-family:var(--font-mono);font-size:12px;color:var(--text3)">1,480 <span style="color:var(--accent)">28%</span></span></div>
-              <div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:2px;background:var(--text3)"></div><span style="font-size:12px">Basic</span></div><span style="font-family:var(--font-mono);font-size:12px;color:var(--text3)">1,162 <span style="color:var(--text3)">22%</span></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ LIVE MAP ════ -->
-    <div class="page" id="page-livemap">
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-header">
-          <div class="card-title">Live Fleet Map</div>
-          <div style="display:flex;gap:8px">
-            <div class="map-filter-btn active">All (5,284)</div>
-            <div class="map-filter-btn">Moving (4,218)</div>
-            <div class="map-filter-btn">Idle (312)</div>
-            <div class="map-filter-btn">Offline (89)</div>
-            <span class="card-badge live">● LIVE</span>
-          </div>
-        </div>
-        <div class="map-container" style="height:480px">
-          <div class="map-grid"></div>
-          <svg viewBox="0 0 800 480" style="position:absolute;inset:0;width:100%;height:100%;opacity:.2">
-            <path d="M0,240 Q200,180 400,240 Q600,300 800,240" stroke="#00d4ff" stroke-width="3" fill="none"/>
-            <path d="M400,0 Q430,240 400,480" stroke="#00d4ff" stroke-width="2" fill="none"/>
-            <path d="M0,120 Q300,140 500,100 Q650,70 800,120" stroke="#4a6080" stroke-width="1.5" fill="none"/>
-            <path d="M0,360 Q250,340 480,380 Q650,410 800,360" stroke="#4a6080" stroke-width="1.5" fill="none"/>
-            <path d="M160,0 Q180,240 160,480" stroke="#4a6080" stroke-width="1" fill="none"/>
-            <path d="M640,0 Q620,240 640,480" stroke="#4a6080" stroke-width="1" fill="none"/>
-            <circle cx="400" cy="240" r="80" stroke="rgba(0,212,255,0.15)" stroke-width="1" fill="rgba(0,212,255,0.03)"/>
-            <circle cx="400" cy="240" r="140" stroke="rgba(0,212,255,0.08)" stroke-width="1" fill="none"/>
-          </svg>
-          <div class="v-dot moving" style="left:15%;top:38%" onclick="openPanel()"><div class="v-tooltip"><div class="v-tooltip-no">8950-BGB</div><div class="v-tooltip-speed">106 km/h</div></div></div>
-          <div class="v-dot moving" style="left:25%;top:52%"><div class="v-tooltip"><div class="v-tooltip-no">4521-KAD</div><div class="v-tooltip-speed">87 km/h</div></div></div>
-          <div class="v-dot moving" style="left:42%;top:30%"><div class="v-tooltip"><div class="v-tooltip-no">7782-LMR</div><div class="v-tooltip-speed">94 km/h</div></div></div>
-          <div class="v-dot idle" style="left:52%;top:62%"><div class="v-tooltip"><div class="v-tooltip-no">2341-FBX</div><div class="v-tooltip-speed">Idle · 18 min</div></div></div>
-          <div class="v-dot moving" style="left:63%;top:22%"><div class="v-tooltip"><div class="v-tooltip-no">9901-QRZ</div><div class="v-tooltip-speed">112 km/h</div></div></div>
-          <div class="v-dot stopped" style="left:70%;top:68%"><div class="v-tooltip"><div class="v-tooltip-no">3318-WXT</div><div class="v-tooltip-speed">Stopped · 45 min</div></div></div>
-          <div class="v-dot offline" style="left:80%;top:42%"><div class="v-tooltip"><div class="v-tooltip-no">6643-NVP</div><div class="v-tooltip-speed">Offline · 2h</div></div></div>
-          <div class="v-dot moving" style="left:35%;top:72%"><div class="v-tooltip"><div class="v-tooltip-no">1127-DKM</div><div class="v-tooltip-speed">76 km/h</div></div></div>
-          <div class="v-dot moving" style="left:55%;top:45%"><div class="v-tooltip"><div class="v-tooltip-no">5584-PKA</div><div class="v-tooltip-speed">68 km/h</div></div></div>
-          <div class="v-dot idle" style="left:8%;top:72%"><div class="v-tooltip"><div class="v-tooltip-no">3390-BKR</div><div class="v-tooltip-speed">Idle · 5 min</div></div></div>
-          <div class="map-overlay">
-            <div class="map-btn">+</div><div class="map-btn">−</div><div class="map-btn">⊕</div><div class="map-btn">🔷</div>
-          </div>
-          <div class="map-legend">
-            <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Moving 4,218</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Idle 312</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Stopped 665</div>
-            <div class="legend-item"><div class="legend-dot" style="background:var(--text3)"></div>Offline 89</div>
-          </div>
-          <div style="position:absolute;bottom:12px;right:12px;font-size:10px;color:var(--text3);font-family:var(--font-mono);background:rgba(7,13,26,.8);padding:6px 10px;border-radius:6px;border:1px solid var(--border)">
-            Click vehicle dot for details
-          </div>
-        </div>
-      </div>
-      <div style="font-size:12px;color:var(--text3);text-align:center;font-family:var(--font-mono)">
-        ↑ Click any vehicle dot on map to open detail panel →
-      </div>
-    </div>
-
-    <!-- ════ VEHICLES ════ -->
-    <div class="page" id="page-vehicles">
-      <div style="display:flex;gap:12px;margin-bottom:20px">
-        <div class="search-box" style="max-width:100%;flex:1"><span class="search-icon">🔍</span><input type="text" placeholder="Search by vehicle number, driver, location..."></div>
-        <select style="background:var(--card);border:1px solid var(--border2);color:var(--text);padding:0 14px;border-radius:8px;font-size:12.5px;font-family:var(--font-body)"><option>All Status</option><option>Moving</option><option>Idle</option><option>Stopped</option><option>Offline</option></select>
-        <select style="background:var(--card);border:1px solid var(--border2);color:var(--text);padding:0 14px;border-radius:8px;font-size:12.5px;font-family:var(--font-body)"><option>All Packages</option><option>Enterprise</option><option>Premium</option><option>Standard</option><option>Basic</option></select>
-        <button class="btn btn-primary">Export CSV</button>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">All Vehicles <span style="color:var(--text3);font-size:12px;font-weight:400">(5,284 total)</span></div>
-          <span class="card-badge live">● LIVE DATA</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Vehicle No.</th>
-                <th>Status</th>
-                <th>Driver</th>
-                <th>Speed</th>
-                <th>Fuel</th>
-                <th>Location</th>
-                <th>Package</th>
-                <th>Last Update</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr onclick="openPanel()">
-                <td><span class="vehicle-no">8950-BGB</span></td>
-                <td><span class="status-badge moving"><div class="status-dot"></div>Moving</span></td>
-                <td>Khalid Mansoor</td>
-                <td><div class="speed-bar"><span style="font-family:var(--font-mono);font-size:12px">106</span><div class="speed-track"><div class="speed-fill" style="width:75%"></div></div><span style="font-size:10px;color:var(--text3)">km/h</span></div></td>
-                <td><div class="fuel-bar"><span style="font-family:var(--font-mono);font-size:11px;color:var(--green)">72%</span><div class="fuel-track"><div class="fuel-fill high" style="width:72%"></div></div></div></td>
-                <td style="font-size:11px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Dhahran Jubail Expressway, KSA</td>
-                <td><span class="pkg-tag enterprise">Enterprise</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">10s ago</td>
-              </tr>
-              <tr>
-                <td><span class="vehicle-no">4521-KAD</span></td>
-                <td><span class="status-badge moving"><div class="status-dot"></div>Moving</span></td>
-                <td>Fahad Al-Rashid</td>
-                <td><div class="speed-bar"><span style="font-family:var(--font-mono);font-size:12px">87</span><div class="speed-track"><div class="speed-fill" style="width:60%"></div></div><span style="font-size:10px;color:var(--text3)">km/h</span></div></td>
-                <td><div class="fuel-bar"><span style="font-family:var(--font-mono);font-size:11px;color:var(--yellow)">43%</span><div class="fuel-track"><div class="fuel-fill mid" style="width:43%"></div></div></div></td>
-                <td style="font-size:11px;color:var(--text2)">Riyadh Ring Road, KSA</td>
-                <td><span class="pkg-tag premium">Premium</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">15s ago</td>
-              </tr>
-              <tr>
-                <td><span class="vehicle-no">7782-LMR</span></td>
-                <td><span class="status-badge moving"><div class="status-dot"></div>Moving</span></td>
-                <td>Mohammed Hassan</td>
-                <td><div class="speed-bar"><span style="font-family:var(--font-mono);font-size:12px">94</span><div class="speed-track"><div class="speed-fill" style="width:65%"></div></div><span style="font-size:10px;color:var(--text3)">km/h</span></div></td>
-                <td><div class="fuel-bar"><span style="font-family:var(--font-mono);font-size:11px;color:var(--green)">81%</span><div class="fuel-track"><div class="fuel-fill high" style="width:81%"></div></div></div></td>
-                <td style="font-size:11px;color:var(--text2)">King Fahd Road, Jeddah</td>
-                <td><span class="pkg-tag premium">Premium</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">8s ago</td>
-              </tr>
-              <tr>
-                <td><span class="vehicle-no">2341-FBX</span></td>
-                <td><span class="status-badge idle"><div class="status-dot"></div>Idle</span></td>
-                <td>Ahmed Salim</td>
-                <td><div class="speed-bar"><span style="font-family:var(--font-mono);font-size:12px">0</span><div class="speed-track"><div class="speed-fill" style="width:0%"></div></div><span style="font-size:10px;color:var(--text3)">km/h</span></div></td>
-                <td><div class="fuel-bar"><span style="font-family:var(--font-mono);font-size:11px;color:var(--yellow)">38%</span><div class="fuel-track"><div class="fuel-fill mid" style="width:38%"></div></div></div></td>
-                <td style="font-size:11px;color:var(--text2)">Al Jubayl Industrial City</td>
-                <td><span class="pkg-tag standard">Standard</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">22s ago</td>
-              </tr>
-              <tr>
-                <td><span class="vehicle-no">9901-QRZ</span></td>
-                <td><span class="status-badge moving"><div class="status-dot"></div>Moving</span></td>
-                <td>Omar Faisal</td>
-                <td><div class="speed-bar"><span style="font-family:var(--font-mono);font-size:12px;color:var(--red)">112</span><div class="speed-track"><div class="speed-fill" style="width:85%;background:var(--red)"></div></div><span style="font-size:10px;color:var(--text3)">km/h</span></div></td>
-                <td><div class="fuel-bar"><span style="font-family:var(--font-mono);font-size:11px;color:var(--green)">65%</span><div class="fuel-track"><div class="fuel-fill high" style="width:65%"></div></div></div></td>
-                <td style="font-size:11px;color:var(--text2)">Highway 40, Dammam</td>
-                <td><span class="pkg-tag enterprise">Enterprise</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">5s ago</td>
-              </tr>
-              <tr>
-                <td><span class="vehicle-no">3318-WXT</span></td>
-                <td><span class="status-badge stopped"><div class="status-dot"></div>Stopped</span></td>
-                <td>Sami Al-Otaibi</td>
-                <td><div class="speed-bar"><span style="font-family:var(--font-mono);font-size:12px">0</span><div class="speed-track"><div class="speed-fill" style="width:0%"></div></div><span style="font-size:10px;color:var(--text3)">km/h</span></div></td>
-                <td><div class="fuel-bar"><span style="font-family:var(--font-mono);font-size:11px;color:var(--red)">12%</span><div class="fuel-track"><div class="fuel-fill low" style="width:12%"></div></div></div></td>
-                <td style="font-size:11px;color:var(--text2)">Rest Area, Highway 65</td>
-                <td><span class="pkg-tag basic">Basic</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">45m ago</td>
-              </tr>
-              <tr>
-                <td><span class="vehicle-no">6643-NVP</span></td>
-                <td><span class="status-badge offline"><div class="status-dot"></div>Offline</span></td>
-                <td>Unassigned</td>
-                <td><div class="speed-bar"><span style="font-family:var(--font-mono);font-size:12px;color:var(--text3)">—</span></div></td>
-                <td><div class="fuel-bar"><span style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">N/A</span></div></td>
-                <td style="font-size:11px;color:var(--text3)">Last: Mecca Highway</td>
-                <td><span class="pkg-tag standard">Standard</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--red)">2h ago</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:12px;color:var(--text3)">Showing 7 of 5,284 vehicles</div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-ghost">← Prev</button>
-            <button class="btn btn-ghost" style="background:rgba(0,212,255,.1);border-color:var(--accent);color:var(--accent)">1</button>
-            <button class="btn btn-ghost">2</button>
-            <button class="btn btn-ghost">3</button>
-            <button class="btn btn-ghost">Next →</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ FUEL ════ -->
-    <div class="page" id="page-fuel">
-      <div class="stat-grid">
-        <div class="stat-card green"><div class="stat-label">Avg Fuel Level</div><div class="stat-val green">61.4%</div><div class="stat-change">Fleet average today</div></div>
-        <div class="stat-card orange"><div class="stat-label">Refills Today</div><div class="stat-val orange">284</div><div class="stat-change"><span>+12%</span> vs yesterday</div></div>
-        <div class="stat-card red"><div class="stat-label">Theft Alerts</div><div class="stat-val red">7</div><div class="stat-change">Needs investigation</div></div>
-        <div class="stat-card blue"><div class="stat-label">Fuel Cost Today</div><div class="stat-val blue" style="font-size:24px">SAR 48K</div><div class="stat-change"><span>~$12,800</span></div></div>
-      </div>
-      <div class="grid-6-4">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Fuel Level History — 8950-BGB</div><span class="card-badge info">LAST 7 DAYS</span></div>
-          <div class="card-body">
-            <div style="display:flex;align-items:flex-end;gap:4px;height:120px;margin-bottom:8px">
-              <div style="flex:1;background:linear-gradient(to top,var(--green2),var(--green));border-radius:3px 3px 0 0;height:72%"></div>
-              <div style="flex:1;background:linear-gradient(to top,var(--green2),var(--green));border-radius:3px 3px 0 0;height:60%"></div>
-              <div style="flex:1;background:linear-gradient(to top,var(--green2),var(--green));border-radius:3px 3px 0 0;height:88%"></div>
-              <div style="flex:1;background:linear-gradient(to top,var(--yellow),#ffaa00);border-radius:3px 3px 0 0;height:45%"></div>
-              <div style="flex:1;background:linear-gradient(to top,var(--red),#cc0020);border-radius:3px 3px 0 0;height:20%"></div>
-              <div style="flex:1;background:linear-gradient(to top,var(--green2),var(--green));border-radius:3px 3px 0 0;height:95%;position:relative"><div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:9px;font-family:var(--font-mono);color:var(--green);white-space:nowrap">REFILL +65L</div></div>
-              <div style="flex:1;background:linear-gradient(to top,var(--green2),var(--green));border-radius:3px 3px 0 0;height:72%"></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:var(--font-mono)">
-              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri ⚠</span><span>Sat</span><span>Today</span>
-            </div>
-            <div style="margin-top:16px;padding:12px;background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);border-radius:8px;display:flex;align-items:center;gap:10px">
-              <span style="font-size:20px">⚠️</span>
-              <div>
-                <div style="font-size:12.5px;font-weight:600;color:var(--red)">Suspected Fuel Theft — Friday 14:22</div>
-                <div style="font-size:11px;color:var(--text3)">Fuel dropped from 68% to 12% in 4 minutes while vehicle was stationary. −18L detected.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Critical Low Fuel</div></div>
-          <div class="card-body" style="padding:12px 20px">
-            <div class="alert-list">
-              <div class="alert-item critical" style="border-color:var(--orange)">
-                <div class="alert-icon" style="background:rgba(255,140,66,.15)">⛽</div>
-                <div><div class="alert-title">3318-WXT</div><div class="alert-sub">12% fuel · Highway 65</div></div>
-                <div class="alert-time" style="color:var(--red)">CRITICAL</div>
-              </div>
-              <div class="alert-item warning">
-                <div class="alert-icon">⛽</div>
-                <div><div class="alert-title">4521-KAD</div><div class="alert-sub">18% fuel · Riyadh</div></div>
-                <div class="alert-time">LOW</div>
-              </div>
-              <div class="alert-item warning">
-                <div class="alert-icon">⛽</div>
-                <div><div class="alert-title">2341-FBX</div><div class="alert-sub">22% fuel · Al Jubayl</div></div>
-                <div class="alert-time">LOW</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ DRIVERS ════ -->
-    <div class="page" id="page-drivers">
-      <div class="stat-grid">
-        <div class="stat-card blue"><div class="stat-label">Total Drivers</div><div class="stat-val blue">4,892</div></div>
-        <div class="stat-card green"><div class="stat-label">Avg Score</div><div class="stat-val green">78.4</div></div>
-        <div class="stat-card orange"><div class="stat-label">Violations Today</div><div class="stat-val orange">312</div></div>
-        <div class="stat-card red"><div class="stat-label">Score Below 60</div><div class="stat-val red">241</div></div>
-      </div>
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Driver Scoreboard</div><span class="card-badge info">THIS MONTH</span></div>
-          <div class="card-body" style="padding:12px 20px">
-            <div class="driver-row">
-              <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);width:20px">#1</div>
-              <div class="driver-avatar" style="background:linear-gradient(135deg,#ffd32a,#ff9f43)">KM</div>
-              <div style="flex:1"><div class="driver-name">Khalid Mansoor</div><div class="driver-meta">12,400 km · 0 violations</div></div>
-              <div class="score-pill great">97</div>
-            </div>
-            <div class="driver-row">
-              <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);width:20px">#2</div>
-              <div class="driver-avatar" style="background:linear-gradient(135deg,#00e896,#00b870)">FA</div>
-              <div style="flex:1"><div class="driver-name">Fahad Al-Rashid</div><div class="driver-meta">9,820 km · 2 violations</div></div>
-              <div class="score-pill good">88</div>
-            </div>
-            <div class="driver-row">
-              <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);width:20px">#3</div>
-              <div class="driver-avatar" style="background:linear-gradient(135deg,#00d4ff,#0099cc)">MH</div>
-              <div style="flex:1"><div class="driver-name">Mohammed Hassan</div><div class="driver-meta">8,100 km · 5 violations</div></div>
-              <div class="score-pill good">83</div>
-            </div>
-            <div class="driver-row">
-              <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);width:20px">#4</div>
-              <div class="driver-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)">OA</div>
-              <div style="flex:1"><div class="driver-name">Omar Al-Anazi</div><div class="driver-meta">7,340 km · 8 violations</div></div>
-              <div class="score-pill warn">74</div>
-            </div>
-            <div class="driver-row">
-              <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);width:20px">#5</div>
-              <div class="driver-avatar" style="background:linear-gradient(135deg,#ff8c42,#e64000)">SA</div>
-              <div style="flex:1"><div class="driver-name">Sami Al-Otaibi</div><div class="driver-meta">5,640 km · 18 violations</div></div>
-              <div class="score-pill bad">52</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Violations Breakdown</div></div>
-          <div class="card-body">
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <div class="progress-row"><div class="progress-label" style="color:var(--text2)">Speeding</div><div class="progress-track"><div class="progress-fill" style="width:68%;background:var(--red)"></div></div><div class="progress-val">214</div></div>
-              <div class="progress-row"><div class="progress-label" style="color:var(--text2)">Harsh Braking</div><div class="progress-track"><div class="progress-fill" style="width:45%;background:var(--orange)"></div></div><div class="progress-val">141</div></div>
-              <div class="progress-row"><div class="progress-label" style="color:var(--text2)">Harsh Accel.</div><div class="progress-track"><div class="progress-fill" style="width:28%;background:var(--yellow)"></div></div><div class="progress-val">88</div></div>
-              <div class="progress-row"><div class="progress-label" style="color:var(--text2)">Seatbelt Off</div><div class="progress-track"><div class="progress-fill" style="width:18%;background:var(--accent)"></div></div><div class="progress-val">57</div></div>
-              <div class="progress-row"><div class="progress-label" style="color:var(--text2)">Idle Too Long</div><div class="progress-track"><div class="progress-fill" style="width:12%;background:var(--purple)"></div></div><div class="progress-val">38</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ GEOFENCES ════ -->
-    <div class="page" id="page-geofence">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <div style="font-size:13px;color:var(--text2)">48 active zones defined across the fleet</div>
-        <button class="btn btn-primary">+ Draw New Zone</button>
-      </div>
-      <div class="grid-6-4">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Geofence Map</div><span class="card-badge live">● LIVE</span></div>
-          <div class="map-container" style="height:360px">
-            <div class="map-grid"></div>
-            <svg viewBox="0 0 700 360" style="position:absolute;inset:0;width:100%;height:100%;opacity:.3">
-              <path d="M0,180 Q175,140 350,180 Q525,220 700,180" stroke="#00d4ff" stroke-width="2" fill="none"/>
-              <path d="M350,0 Q380,180 350,360" stroke="#00d4ff" stroke-width="1.5" fill="none"/>
-            </svg>
-            <!-- Geofence zones drawn on map -->
-            <svg viewBox="0 0 700 360" style="position:absolute;inset:0;width:100%;height:100%">
-              <circle cx="210" cy="160" r="55" stroke="rgba(0,232,150,0.5)" stroke-width="2" fill="rgba(0,232,150,0.08)" stroke-dasharray="5,3"/>
-              <text x="210" y="225" text-anchor="middle" fill="rgba(0,232,150,0.7)" font-size="10" font-family="Space Mono">Zone A-12</text>
-              <rect x="380" y="100" width="130" height="90" rx="4" stroke="rgba(0,212,255,0.5)" stroke-width="2" fill="rgba(0,212,255,0.06)" stroke-dasharray="5,3"/>
-              <text x="445" y="205" text-anchor="middle" fill="rgba(0,212,255,0.7)" font-size="10" font-family="Space Mono">Depot Central</text>
-              <polygon points="520,220 580,190 620,250 560,270" stroke="rgba(255,140,66,0.5)" stroke-width="2" fill="rgba(255,140,66,0.07)" stroke-dasharray="5,3"/>
-              <text x="570" y="285" text-anchor="middle" fill="rgba(255,140,66,0.7)" font-size="10" font-family="Space Mono">Restricted</text>
-            </svg>
-            <div class="v-dot moving" style="left:28%;top:42%"></div>
-            <div class="v-dot idle" style="left:55%;top:35%"></div>
-            <div class="v-dot stopped" style="left:72%;top:60%"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Active Zones</div></div>
-          <div class="card-body" style="padding:12px">
-            <div class="zone-list">
-              <div class="zone-item">
-                <div class="zone-icon" style="background:rgba(0,232,150,.1)">🟢</div>
-                <div>
-                  <div class="zone-name">Zone A-12</div>
-                  <div class="zone-meta">Circle · 500m radius · 3 vehicles inside</div>
-                </div>
-                <div class="zone-status">
-                  <span style="font-size:10px;color:var(--green);font-family:var(--font-mono)">ACTIVE</span>
-                  <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
-                </div>
-              </div>
-              <div class="zone-item">
-                <div class="zone-icon" style="background:rgba(0,212,255,.1)">🔷</div>
-                <div>
-                  <div class="zone-name">Depot Central</div>
-                  <div class="zone-meta">Rectangle · Entry/Exit alerts · 1 vehicle</div>
-                </div>
-                <div class="zone-status">
-                  <span style="font-size:10px;color:var(--accent);font-family:var(--font-mono)">ACTIVE</span>
-                  <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
-                </div>
-              </div>
-              <div class="zone-item">
-                <div class="zone-icon" style="background:rgba(255,140,66,.1)">⛔</div>
-                <div>
-                  <div class="zone-name">Restricted Area</div>
-                  <div class="zone-meta">Polygon · Entry forbidden · 0 vehicles</div>
-                </div>
-                <div class="zone-status">
-                  <span style="font-size:10px;color:var(--orange);font-family:var(--font-mono)">ACTIVE</span>
-                  <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
-                </div>
-              </div>
-              <div class="zone-item" style="opacity:.5">
-                <div class="zone-icon" style="background:var(--bg)">⚪</div>
-                <div>
-                  <div class="zone-name">Warehouse B</div>
-                  <div class="zone-meta">Circle · Disabled</div>
-                </div>
-                <div class="zone-status">
-                  <span style="font-size:10px;color:var(--text3);font-family:var(--font-mono)">OFF</span>
-                  <label class="toggle"><input type="checkbox"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ ALERTS ════ -->
-    <div class="page" id="page-alerts">
-      <div class="tabs">
-        <div class="tab active">All (143)</div>
-        <div class="tab">Critical (7)</div>
-        <div class="tab">Warning (89)</div>
-        <div class="tab">Info (47)</div>
-        <div class="tab">Resolved</div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">Today's Alerts</div><button class="btn btn-ghost">Acknowledge All</button></div>
-        <div class="card-body" style="padding:12px">
-          <div class="alert-list">
-            <div class="alert-item critical">
-              <div class="alert-icon">🆘</div>
-              <div style="flex:1"><div class="alert-title">Panic Button Pressed</div><div class="alert-sub">Driver: Khalid M. · Vehicle: 8950-BGB · Location: Dhahran Highway</div></div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-                <div class="alert-time">09:14 AM</div>
-                <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px">Respond</button>
-              </div>
-            </div>
-            <div class="alert-item critical">
-              <div class="alert-icon">⛽</div>
-              <div style="flex:1"><div class="alert-title">Fuel Theft Suspected</div><div class="alert-sub">Vehicle: 8950-BGB · −18L in 4 min while stationary · 14:22 PM</div></div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-                <div class="alert-time">14:22 PM</div>
-                <button class="btn btn-ghost" style="font-size:10px;padding:3px 8px">Investigate</button>
-              </div>
-            </div>
-            <div class="alert-item warning">
-              <div class="alert-icon">🚀</div>
-              <div style="flex:1"><div class="alert-title">Speeding Violation</div><div class="alert-sub">Vehicle: 9901-QRZ · Driver: Omar F. · 134 km/h in 120 km/h zone</div></div>
-              <div class="alert-time">11:08 AM</div>
-            </div>
-            <div class="alert-item warning">
-              <div class="alert-icon">📍</div>
-              <div style="flex:1"><div class="alert-title">Geofence Exit — Unauthorized</div><div class="alert-sub">Vehicle: 7782-LMR exited Zone A-12 without scheduled trip</div></div>
-              <div class="alert-time">10:44 AM</div>
-            </div>
-            <div class="alert-item warning">
-              <div class="alert-icon">🛑</div>
-              <div style="flex:1"><div class="alert-title">Harsh Braking Event</div><div class="alert-sub">Vehicle: 4521-KAD · Driver: Fahad · −0.7G deceleration detected</div></div>
-              <div class="alert-time">10:22 AM</div>
-            </div>
-            <div class="alert-item info">
-              <div class="alert-icon">📡</div>
-              <div style="flex:1"><div class="alert-title">Device Offline</div><div class="alert-sub">Vehicle: 6643-NVP · No signal for 2h 14min · Last seen: Mecca Highway</div></div>
-              <div class="alert-time">08:30 AM</div>
-            </div>
-            <div class="alert-item info">
-              <div class="alert-icon">⚖️</div>
-              <div style="flex:1"><div class="alert-title">Overweight Alert</div><div class="alert-sub">Vehicle: 1127-DKM · 1,700 kg loaded · Legal limit 1,500 kg exceeded</div></div>
-              <div class="alert-time">08:14 AM</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ REPORTS ════ -->
-    <div class="page" id="page-reports">
-      <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:13px;color:var(--text2)">Generate and download fleet reports in PDF or Excel format</div>
-        <div style="display:flex;gap:8px">
-          <select style="background:var(--card);border:1px solid var(--border2);color:var(--text);padding:0 12px;border-radius:8px;font-size:12px;font-family:var(--font-body)"><option>All Vehicles</option></select>
-          <select style="background:var(--card);border:1px solid var(--border2);color:var(--text);padding:0 12px;border-radius:8px;font-size:12px;font-family:var(--font-body)"><option>Last 7 Days</option><option>Last 30 Days</option><option>Custom Range</option></select>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-        <div class="report-card">
-          <div class="report-icon" style="background:rgba(0,212,255,.12)">🗺️</div>
-          <div class="report-name">Mileage Report</div>
-          <div class="report-desc">Distance traveled per vehicle per day. Total km, trips, and driving hours breakdown.</div>
-          <div class="report-formats"><span class="fmt-tag">PDF</span><span class="fmt-tag">EXCEL</span></div>
-        </div>
-        <div class="report-card">
-          <div class="report-icon" style="background:rgba(0,232,150,.12)">⛽</div>
-          <div class="report-name">Fuel Report</div>
-          <div class="report-desc">Fuel consumed, refills, suspected theft events, cost per km analysis.</div>
-          <div class="report-formats"><span class="fmt-tag">PDF</span><span class="fmt-tag">EXCEL</span></div>
-        </div>
-        <div class="report-card">
-          <div class="report-icon" style="background:rgba(139,92,246,.12)">👤</div>
-          <div class="report-name">Driver Score Report</div>
-          <div class="report-desc">Score per driver, violations breakdown, improvement trend over time.</div>
-          <div class="report-formats"><span class="fmt-tag">PDF</span><span class="fmt-tag">EXCEL</span></div>
-        </div>
-        <div class="report-card">
-          <div class="report-icon" style="background:rgba(255,71,87,.12)">🚀</div>
-          <div class="report-name">Speeding Report</div>
-          <div class="report-desc">All speeding events, duration, location, max speed per vehicle and driver.</div>
-          <div class="report-formats"><span class="fmt-tag">PDF</span><span class="fmt-tag">EXCEL</span></div>
-        </div>
-        <div class="report-card">
-          <div class="report-icon" style="background:rgba(255,211,42,.1)">⏱️</div>
-          <div class="report-name">Idle Time Report</div>
-          <div class="report-desc">Total idle time per vehicle, estimated fuel wasted, cost impact.</div>
-          <div class="report-formats"><span class="fmt-tag">PDF</span><span class="fmt-tag">EXCEL</span></div>
-        </div>
-        <div class="report-card">
-          <div class="report-icon" style="background:rgba(255,140,66,.12)">📍</div>
-          <div class="report-name">Geofence Activity</div>
-          <div class="report-desc">Entry/exit events per zone, time spent inside, unauthorized access list.</div>
-          <div class="report-formats"><span class="fmt-tag">PDF</span><span class="fmt-tag">EXCEL</span></div>
-        </div>
-        <div class="report-card">
-          <div class="report-icon" style="background:rgba(0,212,255,.1)">📋</div>
-          <div class="report-name">Trip History</div>
-          <div class="report-desc">All trips with start/end point, distance, duration, driver assigned.</div>
-          <div class="report-formats"><span class="fmt-tag">PDF</span><span class="fmt-tag">EXCEL</span></div>
-        </div>
-        <div class="report-card">
-          <div class="report-icon" style="background:rgba(0,232,150,.1)">📊</div>
-          <div class="report-name">Fleet Utilization</div>
-          <div class="report-desc">Active vs idle vs offline time % per vehicle. Fleet efficiency score.</div>
-          <div class="report-formats"><span class="fmt-tag">PDF</span><span class="fmt-tag">EXCEL</span></div>
-        </div>
-        <div class="report-card">
-          <div class="report-icon" style="background:rgba(255,71,87,.1)">🔔</div>
-          <div class="report-name">Alert Summary</div>
-          <div class="report-desc">All alerts by type, acknowledged vs unacknowledged, response time analysis.</div>
-          <div class="report-formats"><span class="fmt-tag">PDF</span><span class="fmt-tag">EXCEL</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ DEVICES ════ -->
-    <div class="page" id="page-devices">
-      <div class="stat-grid">
-        <div class="stat-card green"><div class="stat-label">Online Devices</div><div class="stat-val green">5,195</div></div>
-        <div class="stat-card red"><div class="stat-label">Offline</div><div class="stat-val red">89</div></div>
-        <div class="stat-card orange"><div class="stat-label">Low Signal</div><div class="stat-val orange">234</div></div>
-        <div class="stat-card blue"><div class="stat-label">Total Devices</div><div class="stat-val blue">5,284</div></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">Device Registry</div><button class="btn btn-primary">+ Register Device</button></div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Serial No.</th><th>Model</th><th>Vehicle</th><th>SIM ICCID</th><th>Signal</th><th>Firmware</th><th>Status</th><th>Last Seen</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="font-family:var(--font-mono);font-size:11px;color:var(--accent)">FMB140-001842</td>
-                <td>Teltonika FMB140</td>
-                <td><span class="vehicle-no">8950-BGB</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">8988211000001842</td>
-                <td><div class="signal-bars"><div class="signal-bar active" style="height:4px"></div><div class="signal-bar active" style="height:7px"></div><div class="signal-bar active" style="height:10px"></div><div class="signal-bar active" style="height:13px"></div></div></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">03.28.07</td>
-                <td><span class="status-badge moving" style="font-size:10px">Online</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">10s ago</td>
-              </tr>
-              <tr>
-                <td style="font-family:var(--font-mono);font-size:11px;color:var(--accent)">FMB140-001903</td>
-                <td>Teltonika FMB140</td>
-                <td><span class="vehicle-no">4521-KAD</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">8988211000001903</td>
-                <td><div class="signal-bars"><div class="signal-bar active" style="height:4px"></div><div class="signal-bar active" style="height:7px"></div><div class="signal-bar active" style="height:10px"></div><div class="signal-bar" style="height:13px"></div></div></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">03.28.07</td>
-                <td><span class="status-badge moving" style="font-size:10px">Online</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">15s ago</td>
-              </tr>
-              <tr>
-                <td style="font-family:var(--font-mono);font-size:11px;color:var(--red)">FMB140-002241</td>
-                <td>Teltonika FMB140</td>
-                <td><span class="vehicle-no">6643-NVP</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">8988211000002241</td>
-                <td><div class="signal-bars"><div class="signal-bar" style="height:4px"></div><div class="signal-bar" style="height:7px"></div><div class="signal-bar" style="height:10px"></div><div class="signal-bar" style="height:13px"></div></div></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">03.27.01</td>
-                <td><span class="status-badge offline" style="font-size:10px">Offline</span></td>
-                <td style="font-family:var(--font-mono);font-size:10px;color:var(--red)">2h ago</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ COMPANIES ════ -->
-    <div class="page" id="page-companies">
-      <div style="display:flex;justify-content:space-between;margin-bottom:20px">
-        <div class="stat-grid" style="flex:1;margin-bottom:0;margin-right:0;grid-template-columns:repeat(3,1fr)">
-          <div class="stat-card blue"><div class="stat-label">Total Companies</div><div class="stat-val blue">48</div></div>
-          <div class="stat-card green"><div class="stat-label">Active Tenants</div><div class="stat-val green">46</div></div>
-          <div class="stat-card orange"><div class="stat-label">MRR</div><div class="stat-val orange" style="font-size:22px">$84K</div></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">Client Companies</div><button class="btn btn-primary">+ Add Company</button></div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Company</th><th>Vehicles</th><th>Plan</th><th>Status</th><th>Monthly Revenue</th><th>Joined</th></tr>
-            </thead>
-            <tbody>
-              <tr><td style="font-weight:600">Saudi Logistics Co.</td><td><span class="vehicle-no">1,240</span></td><td><span class="pkg-tag enterprise">Enterprise</span></td><td><span class="status-badge moving" style="font-size:10px">Active</span></td><td style="font-family:var(--font-mono);font-size:12px;color:var(--green)">$29,400/mo</td><td style="font-size:11px;color:var(--text3)">Jan 2024</td></tr>
-              <tr><td style="font-weight:600">Al-Rajhi Transport</td><td><span class="vehicle-no">890</span></td><td><span class="pkg-tag premium">Premium</span></td><td><span class="status-badge moving" style="font-size:10px">Active</span></td><td style="font-family:var(--font-mono);font-size:12px;color:var(--green)">$17,800/mo</td><td style="font-size:11px;color:var(--text3)">Mar 2024</td></tr>
-              <tr><td style="font-weight:600">Aramco Fleet Division</td><td><span class="vehicle-no">650</span></td><td><span class="pkg-tag enterprise">Enterprise</span></td><td><span class="status-badge moving" style="font-size:10px">Active</span></td><td style="font-family:var(--font-mono);font-size:12px;color:var(--green)">$15,400/mo</td><td style="font-size:11px;color:var(--text3)">Feb 2024</td></tr>
-              <tr><td style="font-weight:600">Gulf Cargo Pvt Ltd</td><td><span class="vehicle-no">420</span></td><td><span class="pkg-tag standard">Standard</span></td><td><span class="status-badge moving" style="font-size:10px">Active</span></td><td style="font-family:var(--font-mono);font-size:12px;color:var(--green)">$6,300/mo</td><td style="font-size:11px;color:var(--text3)">May 2024</td></tr>
-              <tr><td style="font-weight:600">Al-Khobar Trucks</td><td><span class="vehicle-no">84</span></td><td><span class="pkg-tag basic">Basic</span></td><td><span class="status-badge idle" style="font-size:10px">Trial</span></td><td style="font-family:var(--font-mono);font-size:12px;color:var(--yellow)">$840/mo</td><td style="font-size:11px;color:var(--text3)">Feb 2026</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ════ SETTINGS ════ -->
-    <div class="page" id="page-settings">
-      <div class="grid-2">
-        <div>
-          <div class="card" style="margin-bottom:16px">
-            <div class="card-header"><div class="card-title">Alert Thresholds</div></div>
-            <div class="card-body">
-              <div class="setting-row">
-                <div class="setting-info"><div class="setting-name">Speed Limit</div><div class="setting-desc">Trigger alert when vehicle exceeds this speed</div></div>
-                <div style="display:flex;align-items:center;gap:8px"><input type="number" value="120" style="width:60px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:4px 8px;font-size:13px;font-family:var(--font-mono);text-align:center"><span style="font-size:12px;color:var(--text3)">km/h</span></div>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info"><div class="setting-name">Idle Time Alert</div><div class="setting-desc">Alert after engine idle for this duration</div></div>
-                <div style="display:flex;align-items:center;gap:8px"><input type="number" value="15" style="width:60px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:4px 8px;font-size:13px;font-family:var(--font-mono);text-align:center"><span style="font-size:12px;color:var(--text3)">min</span></div>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info"><div class="setting-name">Low Fuel Warning</div><div class="setting-desc">Alert when fuel drops below this level</div></div>
-                <div style="display:flex;align-items:center;gap:8px"><input type="number" value="25" style="width:60px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:4px 8px;font-size:13px;font-family:var(--font-mono);text-align:center"><span style="font-size:12px;color:var(--text3)">%</span></div>
-              </div>
-              <div class="setting-row">
-                <div class="setting-info"><div class="setting-name">Device Offline Alert</div><div class="setting-desc">Alert when no data received for this time</div></div>
-                <div style="display:flex;align-items:center;gap:8px"><input type="number" value="10" style="width:60px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:4px 8px;font-size:13px;font-family:var(--font-mono);text-align:center"><span style="font-size:12px;color:var(--text3)">min</span></div>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header"><div class="card-title">Notification Channels</div></div>
-            <div class="card-body">
-              <div class="setting-row"><div class="setting-info"><div class="setting-name">Email Notifications</div><div class="setting-desc">Send alerts to registered email addresses</div></div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
-              <div class="setting-row"><div class="setting-info"><div class="setting-name">SMS Alerts</div><div class="setting-desc">Send critical alerts via SMS</div></div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
-              <div class="setting-row"><div class="setting-info"><div class="setting-name">Push Notifications</div><div class="setting-desc">Mobile app push notifications</div></div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
-              <div class="setting-row"><div class="setting-info"><div class="setting-name">WhatsApp Alerts</div><div class="setting-desc">Critical alerts via WhatsApp Business API</div></div><label class="toggle"><input type="checkbox"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div class="card" style="margin-bottom:16px">
-            <div class="card-header"><div class="card-title">Data Settings</div></div>
-            <div class="card-body">
-              <div class="setting-row"><div class="setting-info"><div class="setting-name">Data Tracking Interval</div><div class="setting-desc">How often devices send location data</div></div><select style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:var(--font-body)"><option>Every 10 seconds</option><option>Every 30 seconds</option><option>Every 1 minute</option></select></div>
-              <div class="setting-row"><div class="setting-info"><div class="setting-name">History Retention</div><div class="setting-desc">Keep raw GPS data for this duration</div></div><select style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:var(--font-body)"><option>90 Days</option><option>180 Days</option><option>1 Year</option></select></div>
-              <div class="setting-row"><div class="setting-info"><div class="setting-name">Fuel Theft Sensitivity</div><div class="setting-desc">Minimum drop % to trigger theft alert</div></div><select style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:var(--font-body)"><option>10% drop</option><option>15% drop</option><option>20% drop</option></select></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header"><div class="card-title">Platform Info</div></div>
-            <div class="card-body">
-              <div class="data-row"><div class="data-key">Platform Version</div><div class="data-val accent">v1.0.0</div></div>
-              <div class="data-row"><div class="data-key">Server Status</div><div class="data-val green">● All systems operational</div></div>
-              <div class="data-row"><div class="data-key">DB Status</div><div class="data-val green">● Connected</div></div>
-              <div class="data-row"><div class="data-key">MQTT Broker</div><div class="data-val green">● Online · 5,195 connections</div></div>
-              <div class="data-row"><div class="data-key">Kafka Queue</div><div class="data-val green">● Processing 490 msg/sec</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-</div>
-
-<!-- ── VEHICLE DETAIL PANEL ── -->
-<div class="detail-panel" id="detail-panel">
-  <div class="panel-header">
-    <div>
-      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-bottom:3px">VEHICLE DETAIL</div>
-      <div style="font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--accent)">8950-BGB</div>
-    </div>
-    <button class="panel-close" onclick="closePanel()">✕</button>
-  </div>
-  <div class="panel-body">
-    <div class="mini-map">
-      <div class="mini-map-grid"></div>
-      <div class="mini-map-trail"></div>
-      <div class="mini-map-dot"></div>
-    </div>
-    <div style="font-size:10px;color:var(--text3);font-family:var(--font-mono);margin-bottom:12px;line-height:1.5">
-      📍 Dhahran Jubail Expressway, Al Jubayl, Eastern Region, Saudi Arabia
-    </div>
-
-    <div class="section-label">LIVE SENSOR DATA</div>
-    <div class="sensor-grid">
-      <div class="sensor-card">
-        <div class="sensor-label">SPEED</div>
-        <div class="sensor-val accent">106<span class="sensor-unit">km/h</span></div>
-      </div>
-      <div class="sensor-card">
-        <div class="sensor-label">FUEL LEVEL</div>
-        <div class="sensor-val green">72<span class="sensor-unit">%</span></div>
-      </div>
-      <div class="sensor-card">
-        <div class="sensor-label">WEIGHT</div>
-        <div class="sensor-val orange">1,700<span class="sensor-unit">kg</span></div>
-      </div>
-      <div class="sensor-card">
-        <div class="sensor-label">IGNITION</div>
-        <div class="sensor-val green">ON</div>
-      </div>
-    </div>
-    <div class="sensor-grid">
-      <div class="sensor-card">
-        <div class="sensor-label">SEATBELT</div>
-        <div class="sensor-val green" style="font-size:13px">Attached</div>
-      </div>
-      <div class="sensor-card">
-        <div class="sensor-label">DOOR</div>
-        <div class="sensor-val green" style="font-size:13px">Closed</div>
-      </div>
-    </div>
-
-    <div class="section-label">VEHICLE INFO</div>
-    <div class="data-row"><div class="data-key">Vehicle No</div><div class="data-val accent">8950-BGB</div></div>
-    <div class="data-row"><div class="data-key">Driver</div><div class="data-val">Khalid Mansoor</div></div>
-    <div class="data-row"><div class="data-key">Package</div><div class="data-val"><span class="pkg-tag enterprise">Enterprise</span></div></div>
-    <div class="data-row"><div class="data-key">Device</div><div class="data-val" style="font-size:11px;font-family:var(--font-mono)">FMB140-001842</div></div>
-    <div class="data-row"><div class="data-key">Last Update</div><div class="data-val green">10 seconds ago</div></div>
-
-    <div class="section-label">DEVICE DATA</div>
-    <div class="data-row"><div class="data-key">TrackDateTime</div><div class="data-val" style="font-size:11px;font-family:var(--font-mono)">2026-02-28 08:22:00</div></div>
-    <div class="data-row"><div class="data-key">Latitude</div><div class="data-val" style="font-size:11px;font-family:var(--font-mono)">26.8768433</div></div>
-    <div class="data-row"><div class="data-key">Longitude</div><div class="data-val" style="font-size:11px;font-family:var(--font-mono)">49.7525616</div></div>
-    <div class="data-row"><div class="data-key">Distance</div><div class="data-val" style="font-size:11px;font-family:var(--font-mono)">176,643 m</div></div>
-    <div class="data-row"><div class="data-key">Expiry Date</div><div class="data-val">2026-12-31</div></div>
-
-    <div style="display:flex;gap:8px;margin-top:16px">
-      <button class="btn btn-primary" style="flex:1">View Full Trip</button>
-      <button class="btn btn-ghost" style="flex:1">📞 Call Driver</button>
+  <!-- Step 3: Sheets info -->
+  <div class="card">
+    <div class="card-title">03 — File mein ye 4 sheets hongi</div>
+    <div class="sheets-info">
+      <div class="sheet-chip"><div class="icon">🎯</div><div class="info"><span class="name">Weekly Tracker</span><span class="desc">Mon–Sun goals + circles</span></div></div>
+      <div class="sheet-chip"><div class="icon">📅</div><div class="info"><span class="name">Monthly Habit Grid</span><span class="desc">31 din ka full grid</span></div></div>
+      <div class="sheet-chip"><div class="icon">⏰</div><div class="info"><span class="name">Daily Planner</span><span class="desc">Time blocks + reflection</span></div></div>
+      <div class="sheet-chip"><div class="icon">✅</div><div class="info"><span class="name">Todo List</span><span class="desc">Aaj / Hafta / Someday</span></div></div>
     </div>
   </div>
+
+  <!-- Generate -->
+  <button class="gen-btn" id="genBtn" onclick="generateExcel()">
+    ⚡ GENERATE &amp; DOWNLOAD EXCEL
+  </button>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">Generating...</div>
+  </div>
+
+  <!-- Success -->
+  <div class="success" id="successBox">
+    <div class="success-icon">🎉</div>
+    <h3>Excel Ready! Download ho gaya!</h3>
+    <p id="successMsg">Print karo aur wall pe lagao. Roz dekho, roz karo. 💪</p>
+  </div>
+
 </div>
 
 <script>
-const pageTitles = {
-  dashboard: 'Dashboard Overview',
-  livemap: 'Live Fleet Map',
-  vehicles: 'Vehicle Management',
-  fuel: 'Fuel Monitoring',
-  drivers: 'Driver Management',
-  geofence: 'Geofence Manager',
-  alerts: 'Alerts Center',
-  reports: 'Reports & Analytics',
-  devices: 'Device Management',
-  companies: 'Company Management',
-  settings: 'Platform Settings'
-};
+// ── Setup ──────────────────────────────────────────────────────────────────
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MONTHS_HI = ["January (Janvier)","February","March","April","May","June","July","August","September","October","November","December"];
 
-function showPage(name, navEl) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const page = document.getElementById('page-' + name);
-  if (page) page.classList.add('active');
-  if (navEl) navEl.classList.add('active');
-  document.getElementById('page-title').textContent = pageTitles[name] || name;
-  closePanel();
-}
+const DEFAULT_GOALS = [
+  { emoji:"⚡", name:"JavaScript", cat:"Code", mins:60, pri:true },
+  { emoji:"⚛️", name:"React.js", cat:"Code", mins:60, pri:true },
+  { emoji:"🗣️", name:"English Speaking", cat:"Language", mins:30, pri:true },
+  { emoji:"📖", name:"Vocabulary", cat:"Language", mins:20, pri:true },
+  { emoji:"🗄️", name:"SQL", cat:"Code", mins:45, pri:false },
+  { emoji:"🐳", name:"Docker", cat:"DevOps", mins:45, pri:false },
+  { emoji:"📚", name:"Book Reading", cat:"Habit", mins:20, pri:false },
+  { emoji:"🧩", name:"DSA / Coding", cat:"Code", mins:30, pri:false },
+  { emoji:"🚀", name:"LinkedIn / Portfolio", cat:"Career", mins:15, pri:false },
+];
 
-function openPanel() {
-  document.getElementById('detail-panel').classList.add('open');
-}
+let activeGoals = new Set(DEFAULT_GOALS.map((_, i) => i));
+let customGoals = [];
 
-function closePanel() {
-  document.getElementById('detail-panel').classList.remove('open');
-}
+// Populate month/year selectors
+const monthSel = document.getElementById('monthSel');
+const yearSel = document.getElementById('yearSel');
+const now = new Date();
 
-// Tab switching
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', function() {
-    this.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    this.classList.add('active');
-  });
+MONTHS.forEach((m, i) => {
+  const opt = document.createElement('option');
+  opt.value = i; opt.textContent = m;
+  if (i === now.getMonth()) opt.selected = true;
+  monthSel.appendChild(opt);
 });
 
-// Map filter buttons
-document.querySelectorAll('.map-filter-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    this.closest('div').querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
+for (let y = now.getFullYear(); y <= now.getFullYear() + 2; y++) {
+  const opt = document.createElement('option');
+  opt.value = y; opt.textContent = y;
+  if (y === now.getFullYear()) opt.selected = true;
+  yearSel.appendChild(opt);
+}
+
+// Render goals grid
+function renderGoals() {
+  const grid = document.getElementById('goalsGrid');
+  grid.innerHTML = '';
+  const allGoals = [...DEFAULT_GOALS, ...customGoals];
+  allGoals.forEach((g, i) => {
+    const tag = document.createElement('div');
+    tag.className = 'goal-tag' + (activeGoals.has(i) ? ' active' : '');
+    tag.innerHTML = `<div class="dot"></div><span class="goal-emoji">${g.emoji}</span><span>${g.name}</span>`;
+    tag.onclick = () => {
+      activeGoals.has(i) ? activeGoals.delete(i) : activeGoals.add(i);
+      renderGoals();
+    };
+    grid.appendChild(tag);
   });
+}
+renderGoals();
+
+function addCustomGoal() {
+  const inp = document.getElementById('customGoalInput');
+  const val = inp.value.trim();
+  if (!val) return;
+  customGoals.push({ emoji:"🎯", name:val, cat:"Custom", mins:30, pri:false });
+  activeGoals.add(DEFAULT_GOALS.length + customGoals.length - 1);
+  inp.value = '';
+  renderGoals();
+}
+document.getElementById('customGoalInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addCustomGoal();
 });
 
-// Animate vehicle dots on map - subtle movement
-setInterval(() => {
-  document.querySelectorAll('.v-dot.moving').forEach(dot => {
-    const left = parseFloat(dot.style.left);
-    const top = parseFloat(dot.style.top);
-    dot.style.left = (left + (Math.random() - 0.5) * 0.3) + '%';
-    dot.style.top = (top + (Math.random() - 0.5) * 0.2) + '%';
-  });
-}, 2000);
+// ── Excel styles helpers ──────────────────────────────────────────────────
+function s(fgColor) { return { patternType:"solid", fgColor:{ rgb: fgColor } }; }
 
-// Live update simulation - topbar counter
-setInterval(() => {
-  const dots = document.querySelectorAll('.topbar-stat');
-  // subtle pulse on the green dot
-}, 5000);
+function font(opts = {}) {
+  return { name: "Arial", sz: opts.sz||10, bold:!!opts.bold, color:{rgb: opts.color||"1E293B"}, italic:!!opts.italic };
+}
+
+function align(h="center", v="center", indent=0) {
+  return { horizontal:h, vertical:v, indent, wrapText: false };
+}
+
+function border(c="CBD5E1", thin=true) {
+  const st = thin ? "thin" : "medium";
+  return { top:{style:st,color:{rgb:c}}, bottom:{style:st,color:{rgb:c}}, left:{style:st,color:{rgb:c}}, right:{style:st,color:{rgb:c}} };
+}
+
+function cell(v, fillClr, fontOpts={}, alignOpts=[], borderClr=null) {
+  const c = { v, t: typeof v === 'number' ? 'n' : 's' };
+  const style = { fill: s(fillClr), font: font(fontOpts), alignment: align(...alignOpts) };
+  if (borderClr) style.border = border(borderClr);
+  c.s = style;
+  return c;
+}
+
+// ── Build worksheet data ──────────────────────────────────────────────────
+function setCell(ws, addr, v, fillClr, fontOpts, alignOpts, borderClr) {
+  ws[addr] = cell(v, fillClr, fontOpts, alignOpts, borderClr);
+}
+
+function mergeCells(ws, range) {
+  if (!ws['!merges']) ws['!merges'] = [];
+  ws['!merges'].push(XLSX.utils.decode_range(range));
+}
+
+function setRow(ws, row, height) {
+  if (!ws['!rows']) ws['!rows'] = [];
+  ws['!rows'][row - 1] = { hpt: height };
+}
+
+// ── SHEET 1: Weekly Tracker ───────────────────────────────────────────────
+function buildWeekly(month, year, goals, userName) {
+  const ws = { '!cols': [], '!rows': [], '!merges': [] };
+  const D="0A0A0F", MD="16213E", BL="3B82F6", PU="8B5CF6", GO="F59E0B";
+  const GN="10B981", WH="FFFFFF", LG="F1F5F9", PR="FFF7ED", NM="F8FAFC";
+  const monthName = MONTHS[month];
+  const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+  ws['!cols'] = [
+    {wch:3},{wch:24},{wch:10},{wch:8},
+    {wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:8}
+  ];
+
+  // Row 1: Title
+  setRow(ws, 1, 38);
+  const title = `${userName ? userName + " ka " : ""}WEEKLY FOCUS TRACKER — ${monthName} ${year}`;
+  ws['A1'] = { v: title, t:'s', s:{ fill:s(D), font:font({sz:13,bold:true,color:WH}), alignment:align("center","center") }};
+  mergeCells(ws, 'A1:L1');
+
+  // Row 2: Week + month goal
+  setRow(ws, 2, 20);
+  ws['A2'] = { v:"Week of: ___________________________", t:'s', s:{fill:s(MD), font:font({sz:10,color:"64748B"}), alignment:align("left","center",1)}};
+  mergeCells(ws, 'A2:D2');
+  ws['E2'] = { v:"Monthly Goal: _________________________________________", t:'s', s:{fill:s(MD), font:font({sz:10,color:"64748B"}), alignment:align("left","center",1)}};
+  mergeCells(ws, 'E2:L2');
+
+  // Row 3: Spacer
+  setRow(ws, 3, 6);
+  ws['A3'] = { v:"", t:'s', s:{fill:s("E2E8F0")}};
+  mergeCells(ws, 'A3:L3');
+
+  // Row 4: Column headers
+  setRow(ws, 4, 28);
+  const hdrs = ["#","Goal / Skill","Category","Target","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Total"];
+  const cols = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+  hdrs.forEach((h,i) => {
+    ws[`${cols[i]}4`] = {v:h, t:'s', s:{fill:s(BL), font:font({sz:9,bold:true,color:WH}), alignment:align(), border:border("2563EB")}};
+  });
+
+  // Row 5: Dates
+  setRow(ws, 5, 16);
+  ws['A5'] = {v:"Date →", t:'s', s:{fill:s(LG), font:font({sz:8,color:"94A3B8"}), alignment:align()}};
+  mergeCells(ws, 'A5:D5');
+  ["E","F","G","H","I","J","K"].forEach(c => {
+    ws[`${c}5`] = {v:"___/__", t:'s', s:{fill:s(LG), font:font({sz:8,color:"94A3B8"}), alignment:align()}};
+  });
+  ws['L5'] = {v:"", t:'s', s:{fill:s(LG)}};
+
+  // Goals
+  let row = 6, num = 1;
+  const priorityGoals = goals.filter(g => g.pri);
+  const otherGoals = goals.filter(g => !g.pri);
+
+  // Priority header
+  setRow(ws, row, 20);
+  ws[`A${row}`] = {v:"⭐ PRIORITY GOALS — Pehle ye karo", t:'s', s:{fill:s("292524"), font:font({sz:9,bold:true,color:GO}), alignment:align()}};
+  mergeCells(ws, `A${row}:L${row}`); row++;
+
+  [...priorityGoals, {_sep:true}, ...otherGoals].forEach(g => {
+    if (g._sep) {
+      setRow(ws, row, 20);
+      ws[`A${row}`] = {v:"── OTHER GOALS ──", t:'s', s:{fill:s(LG), font:font({sz:8,bold:true,color:"94A3B8"}), alignment:align()}};
+      mergeCells(ws, `A${row}:L${row}`); row++; return;
+    }
+    const bg = g.pri ? PR : NM;
+    setRow(ws, row, 24);
+    ws[`A${row}`] = {v:num, t:'n', s:{fill:s(bg), font:font({sz:9,color:"94A3B8"}), alignment:align(), border:border()}};
+    ws[`B${row}`] = {v:`${g.emoji} ${g.name}`, t:'s', s:{fill:s(bg), font:font({sz:10,bold:g.pri,color:"1E293B"}), alignment:align("left","center",1), border:border()}};
+    ws[`C${row}`] = {v:g.cat, t:'s', s:{fill:s(bg), font:font({sz:8,color:"64748B"}), alignment:align(), border:border()}};
+    ws[`D${row}`] = {v:`${g.mins}min`, t:'s', s:{fill:s(bg), font:font({sz:9,bold:true,color:BL}), alignment:align(), border:border()}};
+    ["E","F","G","H","I","J","K"].forEach(c => {
+      ws[`${c}${row}`] = {v:"o", t:'s', s:{fill:s(bg), font:font({sz:14,color:"CBD5E1"}), alignment:align(), border:border()}};
+    });
+    ws[`L${row}`] = {v:"__ / 7", t:'s', s:{fill:s(bg), font:font({sz:9,color:"94A3B8"}), alignment:align(), border:border()}};
+    num++; row++;
+  });
+
+  // Week summary
+  setRow(ws, row, 6);
+  ws[`A${row}`] = {v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws, `A${row}:L${row}`); row++;
+  setRow(ws, row, 22);
+  ws[`A${row}`] = {v:"WEEK SUMMARY",t:'s',s:{fill:s(PU),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
+  mergeCells(ws, `A${row}:D${row}`);
+  ["E","F","G","H","I","J","K","L"].forEach((c,i) => {
+    ws[`${c}${row}`] = {v:["Mon","Tue","Wed","Thu","Fri","Sat","Sun","Total"][i],t:'s',s:{fill:s(PU),font:font({sz:9,bold:true,color:WH}),alignment:align(),border:border("7C3AED")}};
+  }); row++;
+  setRow(ws, row, 22);
+  ws[`A${row}`] = {v:`Goals (out of ${goals.length})`,t:'s',s:{fill:s("F5F3FF"),font:font({sz:9}),alignment:align("left","center",1),border:border()}};
+  mergeCells(ws, `A${row}:D${row}`);
+  ["E","F","G","H","I","J","K","L"].forEach(c => {
+    ws[`${c}${row}`] = {v:`__ / ${goals.length}`,t:'s',s:{fill:s("F5F3FF"),font:font({sz:9,color:"94A3B8"}),alignment:align(),border:border()}};
+  }); row++;
+
+  // Daily intention
+  setRow(ws, row, 6); ws[`A${row}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${row}:L${row}`); row++;
+  setRow(ws, row, 20);
+  ws[`A${row}`]={v:"DAILY INTENTION — Subah uthke ye likho",t:'s',s:{fill:s(D),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
+  mergeCells(ws,`A${row}:L${row}`); row++;
+  ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].forEach(day => {
+    setRow(ws, row, 20);
+    ws[`A${row}`]={v:day.substring(0,3),t:'s',s:{fill:s("EFF6FF"),font:font({sz:8,bold:true,color:BL}),alignment:align(),border:border()}};
+    ws[`B${row}`]={v:"",t:'s',s:{fill:s("FAFAFA"),border:border()}};
+    mergeCells(ws,`B${row}:L${row}`); row++;
+  });
+
+  // Footer
+  setRow(ws, row, 26);
+  ws[`A${row}`]={v:`"Consistency > Perfection — Roz thoda karo, ek din sab badal jayega." — ${monthName} ${year}`,t:'s',s:{fill:s("1C1917"),font:font({sz:10,bold:true,color:GO}),alignment:align()}};
+  mergeCells(ws,`A${row}:L${row}`);
+
+  ws['!ref'] = `A1:L${row}`;
+  return ws;
+}
+
+// ── SHEET 2: Monthly Habit Grid ────────────────────────────────────────────
+function buildMonthly(month, year, goals, userName) {
+  const ws = { '!cols':[], '!rows':[], '!merges':[] };
+  const D="0A0A0F", MD="16213E", BL="3B82F6", PU="8B5CF6", GO="F59E0B", WH="FFFFFF";
+  const monthName = MONTHS[month];
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const maxCol = 3 + daysInMonth;
+  const lastColLetter = XLSX.utils.encode_col(maxCol - 1);
+
+  ws['!cols'] = [{wch:3},{wch:22}];
+  for (let d=0;d<daysInMonth;d++) ws['!cols'].push({wch:3.2});
+
+  setRow(ws, 1, 34);
+  ws['A1']={v:`${userName?userName+" ka ":""}MONTHLY HABIT GRID — ${monthName} ${year}`,t:'s',s:{fill:s(D),font:font({sz:13,bold:true,color:WH}),alignment:align()}};
+  mergeCells(ws,`A1:${lastColLetter}1`);
+
+  setRow(ws, 2, 18);
+  ws['A2']={v:`Month: ${monthName} ${year}    Streak Goal: _____ days    Best Streak: _____ days`,t:'s',s:{fill:s(MD),font:font({sz:9,color:"94A3B8"}),alignment:align("left","center",1)}};
+  mergeCells(ws,`A2:${lastColLetter}2`);
+
+  // Headers
+  setRow(ws, 3, 22);
+  ws['A3']={v:"#",t:'s',s:{fill:s(BL),font:font({sz:9,bold:true,color:WH}),alignment:align()}};
+  ws['B3']={v:"Habit / Skill",t:'s',s:{fill:s(BL),font:font({sz:9,bold:true,color:WH}),alignment:align()}};
+  for (let d=1;d<=daysInMonth;d++) {
+    const colLetter = XLSX.utils.encode_col(2+d-1);
+    const isWeekend = new Date(year,month,d).getDay()===0 || new Date(year,month,d).getDay()===6;
+    ws[`${colLetter}3`]={v:d,t:'n',s:{fill:s(isWeekend?PU:BL),font:font({sz:8,bold:true,color:WH}),alignment:align(),border:border("2563EB")}};
+  }
+
+  // Goals
+  let row=4, num=1;
+  const priGoals = goals.filter(g=>g.pri);
+  const othGoals = goals.filter(g=>!g.pri);
+
+  setRow(ws,row,16);
+  ws[`A${row}`]={v:"PRIORITY",t:'s',s:{fill:s("292524"),font:font({sz:8,bold:true,color:GO}),alignment:align()}};
+  mergeCells(ws,`A${row}:${lastColLetter}${row}`); row++;
+
+  [...priGoals,{_sep:true},...othGoals].forEach(g=>{
+    if(g._sep){
+      setRow(ws,row,16);
+      ws[`A${row}`]={v:"OTHER GOALS",t:'s',s:{fill:s("F8FAFC"),font:font({sz:8,bold:true,color:"94A3B8"}),alignment:align()}};
+      mergeCells(ws,`A${row}:${lastColLetter}${row}`); row++; return;
+    }
+    const bg=g.pri?"FFF7ED":"F8FAFC";
+    setRow(ws,row,20);
+    ws[`A${row}`]={v:num,t:'n',s:{fill:s(bg),font:font({sz:8,color:"94A3B8"}),alignment:align(),border:border()}};
+    ws[`B${row}`]={v:`${g.emoji} ${g.name}`,t:'s',s:{fill:s(bg),font:font({sz:9,bold:g.pri,color:"1E293B"}),alignment:align("left","center",1),border:border()}};
+    for(let d=1;d<=daysInMonth;d++){
+      const cl=XLSX.utils.encode_col(2+d-1);
+      ws[`${cl}${row}`]={v:"o",t:'s',s:{fill:s(bg),font:font({sz:9,color:"CBD5E1"}),alignment:align(),border:border()}};
+    }
+    num++; row++;
+  });
+
+  setRow(ws,row+1,24);
+  ws[`A${row+1}`]={v:`OK=Kiya   o=Nahi kiya   /=Thoda kiya  |  ${monthName} ${year} — Har din fill karo!`,t:'s',s:{fill:s("1C1917"),font:font({sz:9,bold:true,color:GO}),alignment:align()}};
+  mergeCells(ws,`A${row+1}:${lastColLetter}${row+1}`);
+
+  ws['!ref']=`A1:${lastColLetter}${row+2}`;
+  return ws;
+}
+
+// ── SHEET 3: Daily Planner ─────────────────────────────────────────────────
+function buildDaily(month, year, goals) {
+  const ws = {'!cols':[],'!rows':[],'!merges':[]};
+  const D="0F172A",MD="1E293B",BL="3B82F6",GO="F59E0B",GN="10B981",WH="FFFFFF",MI="F0FDF4";
+  const monthName = MONTHS[month];
+  ws['!cols']=[{wch:4},{wch:6},{wch:28},{wch:14},{wch:14},{wch:10}];
+
+  let r=1;
+  // Title
+  setRow(ws,r,36);
+  ws[`A${r}`]={v:`DAILY PLANNER — ${monthName} ${year}`,t:'s',s:{fill:s(D),font:font({sz:12,bold:true,color:WH}),alignment:align()}};
+  mergeCells(ws,`A${r}:F${r}`); r++;
+
+  setRow(ws,r,20);
+  ws[`A${r}`]={v:`Date: ___________________________`,t:'s',s:{fill:s(MD),font:font({sz:10,color:"64748B"}),alignment:align("left","center",1)}};
+  mergeCells(ws,`A${r}:C${r}`);
+  ws[`D${r}`]={v:"Energy: 1  2  3  4  5",t:'s',s:{fill:s(MD),font:font({sz:9,color:"64748B"}),alignment:align()}};
+  mergeCells(ws,`D${r}:F${r}`); r++;
+
+  setRow(ws,r,6); ws[`A${r}`]={v:"",t:'s',s:{fill:s("334155")}}; mergeCells(ws,`A${r}:F${r}`); r++;
+
+  // Intention
+  setRow(ws,r,20);
+  ws[`A${r}`]={v:"SUBAH KA INTENTION (Uthte hi likho)",t:'s',s:{fill:s("0F4C75"),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
+  mergeCells(ws,`A${r}:F${r}`); r++;
+  [
+    "Aaj mera ek sabse important goal: __________________________________________________",
+    "Aaj main ye 3 cheezein karunga:",
+    "  1) ___________________________________________________________________________",
+    "  2) ___________________________________________________________________________",
+    "  3) ___________________________________________________________________________",
+  ].forEach((txt,i)=>{
+    setRow(ws,r,19);
+    ws[`A${r}`]={v:txt,t:'s',s:{fill:s(i%2===0?"EFF6FF":"DBEAFE"),font:font({sz:10,color:"1E293B"}),alignment:align("left","center",1),border:border()}};
+    mergeCells(ws,`A${r}:F${r}`); r++;
+  });
+
+  setRow(ws,r,6); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:F${r}`); r++;
+
+  // Time blocks header
+  setRow(ws,r,22);
+  ws[`A${r}`]={v:"TIME BLOCKS — Apna din plan karo",t:'s',s:{fill:s(BL),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
+  mergeCells(ws,`A${r}:F${r}`); r++;
+  setRow(ws,r,18);
+  [["A","#"],["B","Time"],["C","Task / Goal"],["D","Goal Area"],["E","Notes"],["F","Done?"]].forEach(([c,h])=>{
+    ws[`${c}${r}`]={v:h,t:'s',s:{fill:s("1D4ED8"),font:font({sz:9,bold:true,color:WH}),alignment:align(),border:border("2563EB")}};
+  }); r++;
+
+  const slots=["5:00-6:00","6:00-7:00","7:00-8:00","8:00-9:00","9:00-10:00","10:00-11:00","11:00-12:00","12:00-1:00","1:00-2:00","2:00-3:00","3:00-4:00","4:00-5:00","5:00-6:00 PM","6:00-7:00 PM","7:00-8:00 PM","8:00-9:00 PM","9:00-10:00 PM","10:00-11:00 PM"];
+  slots.forEach((t,i)=>{
+    const bg=i%2===0?"FFFBEB":"FFF7ED";
+    setRow(ws,r,20);
+    ws[`A${r}`]={v:i+1,t:'n',s:{fill:s(bg),font:font({sz:8,color:"94A3B8"}),alignment:align(),border:border()}};
+    ws[`B${r}`]={v:t,t:'s',s:{fill:s(bg),font:font({sz:8,bold:true,color:GO}),alignment:align(),border:border()}};
+    ws[`C${r}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
+    ws[`D${r}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
+    ws[`E${r}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
+    ws[`F${r}`]={v:"o",t:'s',s:{fill:s(bg),font:font({sz:11,color:"CBD5E1"}),alignment:align(),border:border()}};
+    r++;
+  });
+
+  setRow(ws,r,6); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:F${r}`); r++;
+
+  setRow(ws,r,20);
+  ws[`A${r}`]={v:"RAAT KA REFLECTION (Sone se pehle)",t:'s',s:{fill:s("064E3B"),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
+  mergeCells(ws,`A${r}:F${r}`); r++;
+  ["Aaj maine kya achieve kiya: ___________________________________________",
+   "Sabse badi distraction: ________________________________________________",
+   "Kal improve karunga: __________________________________________________",
+   "Aaj ka self-rating (1-10): _______   Feeling: _________________________"].forEach((txt,i)=>{
+    setRow(ws,r,19);
+    ws[`A${r}`]={v:txt,t:'s',s:{fill:s(i%2===0?MI:"DCFCE7"),font:font({sz:10,color:"1E293B"}),alignment:align("left","center",1),border:border()}};
+    mergeCells(ws,`A${r}:F${r}`); r++;
+  });
+
+  setRow(ws,r,22);
+  ws[`A${r}`]={v:`"Jo aaj kiya woh kal ki duniya mein add ho gaya." — ${MONTHS[month]} ${year}`,t:'s',s:{fill:s(D),font:font({sz:10,bold:true,color:GO}),alignment:align()}};
+  mergeCells(ws,`A${r}:F${r}`);
+  ws['!ref']=`A1:F${r}`;
+  return ws;
+}
+
+// ── SHEET 4: Todo List ─────────────────────────────────────────────────────
+function buildTodo(month, year) {
+  const ws = {'!cols':[],'!rows':[],'!merges':[]};
+  const D="0F172A",MD="1E293B",BL="3B82F6",GO="F59E0B",WH="FFFFFF";
+  const monthName=MONTHS[month];
+  ws['!cols']=[{wch:4},{wch:4},{wch:32},{wch:14},{wch:12},{wch:12},{wch:9},{wch:9}];
+
+  let r=1;
+  setRow(ws,r,36);
+  ws[`A${r}`]={v:`TODO LIST — ${monthName} ${year}`,t:'s',s:{fill:s(D),font:font({sz:14,bold:true,color:WH}),alignment:align()}};
+  mergeCells(ws,`A${r}:H${r}`); r++;
+
+  setRow(ws,r,18);
+  ws[`A${r}`]={v:"[H]=High [M]=Medium [L]=Low   Status: O=Pending >>>=In Progress OK=Done X=Cancelled",t:'s',s:{fill:s(MD),font:font({sz:9,color:"94A3B8"}),alignment:align()}};
+  mergeCells(ws,`A${r}:H${r}`); r++;
+
+  setRow(ws,r,6); ws[`A${r}`]={v:"",t:'s',s:{fill:s("334155")}}; mergeCells(ws,`A${r}:H${r}`); r++;
+
+  function secHdr(row,txt,bg){
+    setRow(ws,row,22);
+    ws[`A${row}`]={v:txt,t:'s',s:{fill:s(bg),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
+    mergeCells(ws,`A${row}:H${row}`);
+  }
+  function colHdrs(row,hdrs,bg){
+    setRow(ws,row,20);
+    hdrs.forEach((h,i)=>{
+      const c=["A","B","C","D","E","F","G","H"][i];
+      ws[`${c}${row}`]={v:h,t:'s',s:{fill:s(bg),font:font({sz:9,bold:true,color:WH}),alignment:align(),border:border("2563EB")}};
+    });
+  }
+  function todoRows(startRow,count,bg1,bg2){
+    for(let i=0;i<count;i++){
+      const ro=startRow+i;
+      const bg=i%2===0?bg1:bg2;
+      setRow(ws,ro,22);
+      ws[`A${ro}`]={v:i+1,t:'n',s:{fill:s(bg),font:font({sz:9,color:"94A3B8"}),alignment:align(),border:border()}};
+      ws[`B${ro}`]={v:"[H]",t:'s',s:{fill:s(bg),font:font({sz:9,bold:true,color:"EF4444"}),alignment:align(),border:border()}};
+      ws[`C${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
+      ws[`D${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
+      ws[`E${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align(),border:border()}};
+      ws[`F${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
+      ws[`G${ro}`]={v:"O",t:'s',s:{fill:s(bg),font:font({sz:11,color:"CBD5E1"}),alignment:align(),border:border()}};
+      ws[`H${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
+    }
+  }
+
+  const hdr=["#","Pri","Task / Todo","Category","Due","Goal Link","Status","Notes"];
+  secHdr(r,"AAJ KE TODOS (Aaj khatam karne hain)","7C3AED"); r++;
+  colHdrs(r,hdr,"5B21B6"); r++;
+  todoRows(r,10,"FAF5FF","F5F3FF"); r+=10;
+
+  setRow(ws,r,8); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:H${r}`); r++;
+  secHdr(r,"IS HAFTE KE TODOS (7 din mein complete karo)",BL); r++;
+  colHdrs(r,hdr,"1D4ED8"); r++;
+  todoRows(r,12,"EFF6FF","DBEAFE"); r+=12;
+
+  setRow(ws,r,8); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:H${r}`); r++;
+  secHdr(r,"SOMEDAY LIST (Baad mein — Important but not urgent)","047857"); r++;
+  colHdrs(r,["#","Pri","Task / Todo","Category","Month","Goal Link","Status","Notes"],"065F46"); r++;
+  todoRows(r,12,"F0FDF4","DCFCE7"); r+=12;
+
+  setRow(ws,r,8); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:H${r}`); r++;
+  secHdr(r,`LEARNING QUEUE — ${monthName} ${year} (Books, Courses, Videos)`,"B45309"); r++;
+  colHdrs(r,["#","Pri","Resource / Topic","Type","Platform","Goal Link","Status","Link/Notes"],"92400E"); r++;
+  todoRows(r,10,"FFFBEB","FEF3C7"); r+=10;
+
+  setRow(ws,r,24);
+  ws[`A${r}`]={v:`Roz subah 5 min: Review > Top 3 choose karo > Baaki block karo | ${monthName} ${year}`,t:'s',s:{fill:s(D),font:font({sz:9,bold:true,color:GO}),alignment:align()}};
+  mergeCells(ws,`A${r}:H${r}`);
+
+  ws['!ref']=`A1:H${r}`;
+  return ws;
+}
+
+// ── MAIN GENERATOR ─────────────────────────────────────────────────────────
+function setProgress(pct, txt) {
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = txt;
+}
+
+function generateExcel() {
+  const month = parseInt(document.getElementById('monthSel').value);
+  const year = parseInt(document.getElementById('yearSel').value);
+  const userName = document.getElementById('userName').value.trim();
+  const allGoals = [...DEFAULT_GOALS, ...customGoals];
+  const selectedGoals = allGoals.filter((_,i) => activeGoals.has(i));
+
+  if (selectedGoals.length === 0) {
+    alert('Koi goal select nahi kiya! Kam se kam ek goal chuniye. 😊');
+    return;
+  }
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+
+  document.getElementById('progressWrap').classList.add('show');
+  document.getElementById('successBox').classList.remove('show');
+
+  setTimeout(() => {
+    setProgress(10, 'Weekly Tracker bana raha hun...');
+    setTimeout(() => {
+      const ws1 = buildWeekly(month, year, selectedGoals, userName);
+      setProgress(30, 'Monthly Habit Grid bana raha hun...');
+      setTimeout(() => {
+        const ws2 = buildMonthly(month, year, selectedGoals, userName);
+        setProgress(55, 'Daily Planner bana raha hun...');
+        setTimeout(() => {
+          const ws3 = buildDaily(month, year, selectedGoals);
+          setProgress(75, 'Todo List bana raha hun...');
+          setTimeout(() => {
+            const ws4 = buildTodo(month, year);
+            setProgress(90, 'File pack kar raha hun...');
+            setTimeout(() => {
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws1, "Weekly Tracker");
+              XLSX.utils.book_append_sheet(wb, ws2, "Monthly Habit Grid");
+              XLSX.utils.book_append_sheet(wb, ws3, "Daily Planner");
+              XLSX.utils.book_append_sheet(wb, ws4, "Todo List");
+
+              const monthName = MONTHS[month];
+              const fname = `Focus_Tracker_${userName ? userName + "_" : ""}${monthName}_${year}.xlsx`;
+              XLSX.writeFile(wb, fname, { cellStyles: true, bookType: 'xlsx' });
+
+              setProgress(100, 'Done! Downloading...');
+              btn.disabled = false;
+
+              document.getElementById('successMsg').textContent =
+                `${fname} download ho gaya! Print karo aur wall pe lagao. ${monthName} ${year} mein goals crush karo! 💪`;
+              document.getElementById('successBox').classList.add('show');
+            }, 200);
+          }, 300);
+        }, 300);
+      }, 300);
+    }, 200);
+  }, 100);
+}
 </script>
 </body>
 </html>

@@ -3,20 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monthly Focus Tracker Generator</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>ATS System — Complete Architecture Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #070B14;
-    --surface: #0D1526;
-    --border: #1E2D45;
-    --blue: #3B82F6;
-    --purple: #8B5CF6;
-    --gold: #F59E0B;
-    --green: #10B981;
-    --text: #E2E8F0;
-    --muted: #64748B;
+    --bg: #0a0e1a;
+    --bg2: #0f1525;
+    --bg3: #141c2e;
+    --border: rgba(99,179,237,0.15);
+    --border-bright: rgba(99,179,237,0.4);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.12);
+    --teal: #2dd4bf;
+    --teal-dim: rgba(45,212,191,0.1);
+    --coral: #fb7185;
+    --coral-dim: rgba(251,113,133,0.1);
+    --amber: #fbbf24;
+    --amber-dim: rgba(251,191,36,0.1);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.1);
+    --green: #4ade80;
+    --green-dim: rgba(74,222,128,0.1);
+    --gray: #94a3b8;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --text-mid: #94a3b8;
+    --accent: #38bdf8;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -24,764 +36,1614 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Mono', monospace;
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 240px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0 0 40px;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .sidebar-logo .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--teal);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .sidebar-logo h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .nav-section {
+    padding: 8px 0;
+  }
+
+  .nav-section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding: 8px 20px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 20px;
+    cursor: pointer;
+    color: var(--text-mid);
+    font-size: 13px;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(56,189,248,0.06); }
+
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 240px;
     min-height: 100vh;
-    overflow-x: hidden;
   }
 
-  /* Animated background */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background: radial-gradient(ellipse 80% 50% at 20% 20%, rgba(59,130,246,0.07) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,0.07) 0%, transparent 60%);
-    pointer-events: none;
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-header {
+    padding: 40px 48px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
   }
 
-  .wrap { max-width: 700px; margin: 0 auto; padding: 40px 20px 80px; }
-
-  /* Header */
-  .header { text-align: center; margin-bottom: 48px; }
-  .badge {
-    display: inline-block;
-    background: rgba(245,158,11,0.1);
-    border: 1px solid rgba(245,158,11,0.3);
-    color: var(--gold);
-    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
-    padding: 5px 16px; border-radius: 99px;
-    margin-bottom: 20px;
-    font-family: 'DM Mono', monospace;
+  .page-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
   }
-  h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(28px, 6vw, 46px);
-    font-weight: 800;
-    line-height: 1.1;
-    background: linear-gradient(135deg, #E2E8F0 0%, #3B82F6 50%, #8B5CF6 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 12px;
-  }
-  .subtitle { color: var(--muted); font-size: 14px; line-height: 1.6; }
 
-  /* Month selector card */
+  .page-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .page-subtitle {
+    color: var(--text-mid);
+    font-size: 14px;
+    max-width: 600px;
+  }
+
+  .page-body {
+    padding: 40px 48px;
+  }
+
+  /* ── CARDS ── */
   .card {
-    background: var(--surface);
+    background: var(--bg2);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
+    border-radius: 12px;
+    padding: 24px;
     margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-  }
-  .card::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(59,130,246,0.4), transparent);
   }
 
   .card-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-purple { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(167,139,250,0.3); }
+  .badge-teal   { background: var(--teal-dim);   color: var(--teal);   border: 1px solid rgba(45,212,191,0.3); }
+  .badge-coral  { background: var(--coral-dim);  color: var(--coral);  border: 1px solid rgba(251,113,133,0.3); }
+  .badge-amber  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(251,191,36,0.3); }
+  .badge-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(96,165,250,0.3); }
+  .badge-green  { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(74,222,128,0.3); }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .flow-step {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .flow-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40px;
+    flex-shrink: 0;
+  }
+
+  .flow-connector .dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 16px;
+  }
+
+  .flow-connector .line {
+    width: 2px;
+    flex: 1;
+    min-height: 20px;
+    background: var(--border);
+  }
+
+  .flow-box {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 6px 0;
+    position: relative;
+  }
+
+  .flow-box:hover { border-color: var(--border-bright); }
+
+  .flow-box .step-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .flow-box .step-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .flow-box .step-desc {
+    font-size: 12px;
+    color: var(--text-mid);
+  }
+
+  /* ── ENTITY GRID ── */
+  .entity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .entity-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .entity-header {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .entity-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .entity-fields {
+    padding: 12px 16px;
+  }
+
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-size: 12px;
+  }
+
+  .field-row:last-child { border-bottom: none; }
+
+  .field-name {
+    font-family: 'JetBrains Mono', monospace;
     color: var(--blue);
-    letter-spacing: 2px; text-transform: uppercase;
+    min-width: 130px;
+  }
+
+  .field-type {
+    color: var(--amber);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  .field-note {
+    color: var(--text-dim);
+    font-size: 11px;
+    margin-left: auto;
+    font-style: italic;
+  }
+
+  /* ── ER DIAGRAM ── */
+  .er-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  /* ── ARCHITECTURE LAYERS ── */
+  .layer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .layer {
+    border-radius: 10px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .layer:hover { border-color: var(--border-bright); transform: translateX(4px); }
+
+  .layer-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .layer-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .layer-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-mid);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  /* ── POINT LIST ── */
+  .point-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .point-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: var(--text-mid);
+    line-height: 1.6;
+  }
+
+  .point-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 20px;
+    margin-top: 2px;
+  }
+
+  .point-list li strong { color: var(--text); }
+
+  /* ── JSONB BOX ── */
+  .code-block {
+    background: #060b14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+
+  .code-block .key { color: var(--blue); }
+  .code-block .str { color: var(--green); }
+  .code-block .bool { color: var(--coral); }
+  .code-block .num { color: var(--amber); }
+  .code-block .comment { color: var(--text-dim); font-style: italic; }
+  .code-block .type { color: var(--purple); }
+
+  /* ── GRID 2COL ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ── PIPELINE STAGES DEMO ── */
+  .stages-demo {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 16px 0;
+  }
+
+  .stage-pill {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .stage-box {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    border: 1px solid;
+  }
+
+  .stage-arrow {
+    width: 24px;
+    height: 2px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .stage-arrow::after {
+    content: '';
+    position: absolute;
+    right: 0; top: -4px;
+    border: 4px solid transparent;
+    border-left: 6px solid var(--border-bright);
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 32px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::before {
+    content: '';
+    width: 3px;
+    height: 18px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── ER SVG ── */
+  #er-canvas {
+    width: 100%;
+    min-height: 600px;
+    display: block;
+  }
+
+  /* ── PERMISSION MATRIX ── */
+  .perm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .perm-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .perm-table th:first-child { text-align: left; }
+
+  .perm-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    text-align: center;
+  }
+
+  .perm-table td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mid);
+    text-align: left;
+  }
+
+  .perm-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .check { color: var(--green); font-size: 14px; }
+  .cross { color: var(--text-dim); font-size: 14px; }
+  .partial { color: var(--amber); font-size: 12px; }
+
+  /* ── REGISTRATION FLOW ── */
+  .reg-flow {
+    position: relative;
+    padding-left: 40px;
+  }
+
+  .reg-flow::before {
+    content: '';
+    position: absolute;
+    left: 10px; top: 20px; bottom: 20px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--purple), var(--teal), var(--blue), var(--green));
+  }
+
+  .reg-step {
+    position: relative;
     margin-bottom: 20px;
   }
 
-  .row { display: flex; gap: 16px; flex-wrap: wrap; }
-
-  .field { flex: 1; min-width: 140px; }
-  .field label {
-    display: block; font-size: 11px; color: var(--muted);
-    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
-  }
-  select, input[type="text"] {
-    width: 100%; background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: 10px; padding: 10px 14px;
-    color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px;
-    outline: none; transition: border 0.2s;
-    appearance: none; -webkit-appearance: none;
-    cursor: pointer;
-  }
-  select:focus, input[type="text"]:focus { border-color: var(--blue); }
-  select option { background: #1E293B; }
-
-  /* Goal tags */
-  .goals-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 10px; margin-top: 4px;
-  }
-  .goal-tag {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-    border-radius: 10px; padding: 8px 12px; cursor: pointer;
-    transition: all 0.2s; user-select: none;
-  }
-  .goal-tag:hover { border-color: var(--blue); background: rgba(59,130,246,0.06); }
-  .goal-tag.active { border-color: var(--blue); background: rgba(59,130,246,0.12); }
-  .goal-tag.active .dot { background: var(--blue); }
-  .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--border); transition: background 0.2s; flex-shrink: 0;
-  }
-  .goal-tag span { font-size: 12px; color: var(--text); }
-  .goal-emoji { font-size: 14px; }
-
-  /* Custom goal input */
-  .custom-goal { display: flex; gap: 10px; margin-top: 12px; }
-  .custom-goal input {
-    flex: 1; background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border); border-radius: 10px;
-    padding: 8px 14px; color: var(--text);
-    font-family: 'DM Mono', monospace; font-size: 13px; outline: none;
-  }
-  .custom-goal input:focus { border-color: var(--purple); }
-  .add-btn {
-    background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.4);
-    color: var(--purple); border-radius: 10px; padding: 8px 16px;
-    cursor: pointer; font-size: 13px; font-family: 'DM Mono', monospace;
-    transition: all 0.2s; white-space: nowrap;
-  }
-  .add-btn:hover { background: rgba(139,92,246,0.25); }
-
-  /* Generate button */
-  .gen-btn {
-    width: 100%; padding: 18px;
-    background: linear-gradient(135deg, #2563EB, #7C3AED);
-    border: none; border-radius: 14px;
-    color: white; font-family: 'Syne', sans-serif;
-    font-size: 16px; font-weight: 800;
-    cursor: pointer; letter-spacing: 1px;
-    transition: all 0.3s; position: relative; overflow: hidden;
-    margin-top: 8px;
-  }
-  .gen-btn::before {
+  .reg-step::before {
     content: '';
-    position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: left 0.4s;
+    position: absolute;
+    left: -34px;
+    top: 14px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 2px solid;
+    z-index: 1;
   }
-  .gen-btn:hover::before { left: 100%; }
-  .gen-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(59,130,246,0.4); }
-  .gen-btn:active { transform: translateY(0); }
-  .gen-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-  /* Progress */
-  .progress-wrap { margin-top: 20px; display: none; }
-  .progress-wrap.show { display: block; }
-  .progress-bar-bg {
-    background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: 10px;
-  }
-  .progress-bar {
-    height: 100%; width: 0%;
-    background: linear-gradient(90deg, var(--blue), var(--purple));
-    border-radius: 99px; transition: width 0.3s ease;
-  }
-  .progress-text { font-size: 12px; color: var(--muted); text-align: center; }
+  .reg-step:nth-child(1)::before { border-color: var(--purple); }
+  .reg-step:nth-child(2)::before { border-color: var(--teal); }
+  .reg-step:nth-child(3)::before { border-color: var(--blue); }
+  .reg-step:nth-child(4)::before { border-color: var(--coral); }
+  .reg-step:nth-child(5)::before { border-color: var(--amber); }
+  .reg-step:nth-child(6)::before { border-color: var(--green); }
 
-  /* Success */
-  .success {
-    display: none; text-align: center;
-    background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2);
-    border-radius: 14px; padding: 24px; margin-top: 16px;
+  .reg-step-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
   }
-  .success.show { display: block; animation: fadeIn 0.4s ease; }
-  .success-icon { font-size: 40px; margin-bottom: 12px; }
-  .success h3 { font-family: 'Syne', sans-serif; font-size: 18px; color: var(--green); margin-bottom: 6px; }
-  .success p { font-size: 13px; color: var(--muted); }
 
-  /* Sheet info */
-  .sheets-info {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px;
+  .reg-step-body {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--text-mid);
   }
-  .sheet-chip {
-    display: flex; align-items: center; gap: 10px;
-    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-    border-radius: 10px; padding: 10px 14px;
-  }
-  .sheet-chip .icon { font-size: 18px; }
-  .sheet-chip .info { display: flex; flex-direction: column; }
-  .sheet-chip .name { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--text); }
-  .sheet-chip .desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .reg-step-body .note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    margin-top: 6px;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .page-body { padding: 24px 20px; }
+    .page-header { padding: 24px 20px 20px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <!-- Header -->
-  <div class="header">
-    <div class="badge">Monthly Generator</div>
-    <h1>Focus Tracker<br>Excel Generator</h1>
-    <p class="subtitle">Har mahine ek fresh Excel — sirf 2 click mein.<br>Apne goals set karo, download karo, print karo. 🔥</p>
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="tag">ATS · Global Platform</div>
+    <h1>Architecture Guide</h1>
   </div>
 
-  <!-- Step 1: Month & Year -->
-  <div class="card">
-    <div class="card-title">01 — Mahina aur Saal chuno</div>
-    <div class="row">
-      <div class="field">
-        <label>Mahina</label>
-        <select id="monthSel"></select>
+  <div class="nav-section">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-item active" data-page="overview" onclick="showPage('overview', this)">
+      <span class="nav-dot" style="background:#a78bfa"></span> System Overview
+    </a>
+    <a class="nav-item" data-page="multitenancy" onclick="showPage('multitenancy', this)">
+      <span class="nav-dot" style="background:#2dd4bf"></span> Multi-Tenancy
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Entities & Schema</div>
+    <a class="nav-item" data-page="entities" onclick="showPage('entities', this)">
+      <span class="nav-dot" style="background:#60a5fa"></span> Key Entities
+    </a>
+    <a class="nav-item" data-page="erdiagram" onclick="showPage('erdiagram', this)">
+      <span class="nav-dot" style="background:#fb7185"></span> ER Diagram
+    </a>
+    <a class="nav-item" data-page="jsonb" onclick="showPage('jsonb', this)">
+      <span class="nav-dot" style="background:#fbbf24"></span> JSONB Fields
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Auth & Roles</div>
+    <a class="nav-item" data-page="roles" onclick="showPage('roles', this)">
+      <span class="nav-dot" style="background:#4ade80"></span> Roles & Permissions
+    </a>
+    <a class="nav-item" data-page="registration" onclick="showPage('registration', this)">
+      <span class="nav-dot" style="background:#f472b6"></span> Registration Flow
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Architecture</div>
+    <a class="nav-item" data-page="backend" onclick="showPage('backend', this)">
+      <span class="nav-dot" style="background:#34d399"></span> NestJS Backend
+    </a>
+    <a class="nav-item" data-page="frontend" onclick="showPage('frontend', this)">
+      <span class="nav-dot" style="background:#818cf8"></span> Next.js Frontend
+    </a>
+    <a class="nav-item" data-page="requestflow" onclick="showPage('requestflow', this)">
+      <span class="nav-dot" style="background:#f59e0b"></span> Request Flow
+    </a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Business Logic</div>
+    <a class="nav-item" data-page="pipeline" onclick="showPage('pipeline', this)">
+      <span class="nav-dot" style="background:#e879f9"></span> Pipeline & Candidate
+    </a>
+  </div>
+</nav>
+
+<!-- ══════════════ PAGES ══════════════ -->
+<div class="main">
+
+  <!-- ─── PAGE: OVERVIEW ─── -->
+  <div id="page-overview" class="page active">
+    <div class="page-header">
+      <div class="page-num">01 / 10</div>
+      <div class="page-title">ATS System — Pura Overview</div>
+      <div class="page-subtitle">Applicant Tracking System ka complete global architecture. Har concept point-wise samjha hai.</div>
+    </div>
+    <div class="page-body">
+
+      <div class="section-title" style="--c:#a78bfa"><span style="background:#a78bfa" class="section-title::before"></span>System kya karta hai?</div>
+      <ul class="point-list">
+        <li><span class="point-num">01</span><span><strong>User (Recruiter Company)</strong> — jo hamara software khareedte hain. Inhe "Tenant" kehte hain. Jab ye pehli baar register karte hain to ye Admin ban jaate hain.</span></li>
+        <li><span class="point-num">02</span><span><strong>Client</strong> — Tenant ka customer. Ye company hoti hai jo jobs deti hai jaise "TCS ko 5 Java developers chahiye."</span></li>
+        <li><span class="point-num">03</span><span><strong>Job</strong> — Client deta hai. Ek job ke liye ek Pipeline banti hai jisme candidates track hote hain.</span></li>
+        <li><span class="point-num">04</span><span><strong>Pipeline</strong> — Ek hiring funnel. Stages hote hain jaise Screening → Interview → Offer → Hired. Tenant apne stages customize kar sakta hai.</span></li>
+        <li><span class="point-num">05</span><span><strong>Candidate</strong> — Jo log apply karte hain. Ek candidate <em>multiple pipelines</em> mein ho sakta hai — aur har pipeline mein uska alag stage/status hoga.</span></li>
+        <li><span class="point-num">06</span><span><strong>Contract</strong> — Tenant (User) aur Client ke beech agreement. Fee structure, validity sab yahan store hota hai.</span></li>
+      </ul>
+
+      <div class="section-title" style="margin-top:32px">"Global" ka matlab kya hai?</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="badge badge-teal">CONCEPT</span> Convention over Configuration</div>
+          <ul class="point-list">
+            <li><span class="point-num">→</span><span>System ka default behavior itna achha ho ki 80% users ko kuch change hi na karna pade</span></li>
+            <li><span class="point-num">→</span><span>Baki 20% ke liye override karne ka clean rasta ho</span></li>
+            <li><span class="point-num">→</span><span>Ek codebase, hazaro tenants ke liye alag alag experience</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="badge badge-purple">PATTERN</span> Tenant Config Object</div>
+          <ul class="point-list">
+            <li><span class="point-num">→</span><span>Login ke baad backend ek config object bhejta hai</span></li>
+            <li><span class="point-num">→</span><span>Pipeline stages, custom fields, feature flags — sab issi mein</span></li>
+            <li><span class="point-num">→</span><span>Frontend isi config se dynamically UI banata hai</span></li>
+          </ul>
+        </div>
       </div>
-      <div class="field">
-        <label>Saal</label>
-        <select id="yearSel"></select>
+
+      <div class="section-title">Tech Stack</div>
+      <div class="layer-stack">
+        <div class="layer" style="background:rgba(167,139,250,0.06); border-color:rgba(167,139,250,0.2)">
+          <div class="layer-label" style="color:var(--purple)">Frontend</div>
+          <div class="layer-title">Next.js (App Router)</div>
+          <div class="layer-items">
+            <span class="chip">TanStack Query</span>
+            <span class="chip">Axios</span>
+            <span class="chip">Zustand</span>
+            <span class="chip">TypeScript</span>
+            <span class="chip">Tailwind CSS</span>
+          </div>
+        </div>
+        <div class="layer" style="background:rgba(45,212,191,0.06); border-color:rgba(45,212,191,0.2)">
+          <div class="layer-label" style="color:var(--teal)">Backend</div>
+          <div class="layer-title">NestJS (Node.js)</div>
+          <div class="layer-items">
+            <span class="chip">TypeORM</span>
+            <span class="chip">Passport JWT</span>
+            <span class="chip">class-validator</span>
+            <span class="chip">EventEmitter2</span>
+            <span class="chip">BullMQ</span>
+          </div>
+        </div>
+        <div class="layer" style="background:rgba(96,165,250,0.06); border-color:rgba(96,165,250,0.2)">
+          <div class="layer-label" style="color:var(--blue)">Database</div>
+          <div class="layer-title">PostgreSQL</div>
+          <div class="layer-items">
+            <span class="chip">Row Level Security</span>
+            <span class="chip">JSONB columns</span>
+            <span class="chip">UUID primary keys</span>
+            <span class="chip">Migrations</span>
+          </div>
+        </div>
       </div>
-      <div class="field">
-        <label>Apna Naam</label>
-        <input type="text" id="userName" placeholder="Jaise: Rahul" value="">
+
+    </div>
+  </div>
+
+  <!-- ─── PAGE: MULTITENANCY ─── -->
+  <div id="page-multitenancy" class="page">
+    <div class="page-header">
+      <div class="page-num">02 / 10</div>
+      <div class="page-title">Multi-Tenancy Architecture</div>
+      <div class="page-subtitle">Ek hi codebase, alag alag companies ke liye completely isolated data.</div>
+    </div>
+    <div class="page-body">
+
+      <div class="section-title">3 Approaches — Kaunsa best hai?</div>
+      <div class="grid-3">
+        <div class="card" style="border-color:rgba(251,113,133,0.3)">
+          <div class="card-title"><span class="badge badge-coral">APPROACH 1</span></div>
+          <div style="font-size:13px; font-weight:600; margin-bottom:8px">Separate Database</div>
+          <ul class="point-list" style="font-size:12px">
+            <li><span style="color:var(--green)">✓</span><span>Maximum isolation</span></li>
+            <li><span style="color:var(--coral)">✗</span><span>Bahut expensive</span></li>
+            <li><span style="color:var(--coral)">✗</span><span>Manage karna mushkil</span></li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(251,191,36,0.3)">
+          <div class="card-title"><span class="badge badge-amber">APPROACH 2</span></div>
+          <div style="font-size:13px; font-weight:600; margin-bottom:8px">Schema Per Tenant</div>
+          <ul class="point-list" style="font-size:12px">
+            <li><span style="color:var(--green)">✓</span><span>Strong isolation</span></li>
+            <li><span style="color:var(--coral)">✗</span><span>Schema migration complex</span></li>
+            <li><span style="color:var(--amber)">~</span><span>Medium complexity</span></li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(74,222,128,0.3)">
+          <div class="card-title"><span class="badge badge-green">APPROACH 3 ✓ BEST</span></div>
+          <div style="font-size:13px; font-weight:600; margin-bottom:8px">Shared Tables + RLS</div>
+          <ul class="point-list" style="font-size:12px">
+            <li><span style="color:var(--green)">✓</span><span>Simple architecture</span></li>
+            <li><span style="color:var(--green)">✓</span><span>PostgreSQL RLS = DB-level isolation</span></li>
+            <li><span style="color:var(--green)">✓</span><span>Industry standard SaaS pattern</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-title">Hamara approach — Shared Tables + tenant_id</div>
+      <ul class="point-list">
+        <li><span class="point-num">01</span><span><strong>tenant_id column</strong> — har ek table mein hota hai. Koi bhi query chal sakti hai, sirf us tenant ka data aayega.</span></li>
+        <li><span class="point-num">02</span><span><strong>Row Level Security (RLS)</strong> — PostgreSQL ka built-in feature. Database level pe guarantee karta hai ki tenant A kabhi tenant B ka data nahi dekh sakta — chahe code mein galti bhi ho.</span></li>
+        <li><span class="point-num">03</span><span><strong>TenantGuard in NestJS</strong> — har HTTP request mein subdomain ya header se tenantId resolve hota hai aur request object pe set hota hai.</span></li>
+        <li><span class="point-num">04</span><span><strong>@TenantId() decorator</strong> — controller mein tenantId seedha milti hai, service ko koi extra lookup nahi karna padta.</span></li>
+        <li><span class="point-num">05</span><span><strong>JWT mein tenantId</strong> — login ke baad JWT token mein tenantId embed hoti hai. Har request ke saath automatically aati hai.</span></li>
+      </ul>
+
+      <div class="section-title">Tenant Resolution — Step by Step</div>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-connector">
+            <div class="dot" style="background:var(--purple)"></div>
+            <div class="line"></div>
+          </div>
+          <div class="flow-box">
+            <div class="step-label">STEP 01</div>
+            <div class="step-title">Browser se request aati hai</div>
+            <div class="step-desc">acme.yourats.com/api/jobs — subdomain mein "acme" tenant hai</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-connector">
+            <div class="dot" style="background:var(--teal)"></div>
+            <div class="line"></div>
+          </div>
+          <div class="flow-box">
+            <div class="step-label">STEP 02</div>
+            <div class="step-title">Next.js middleware.ts</div>
+            <div class="step-desc">Edge pe subdomain parse hota hai → tenantSlug header add karta hai request mein</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-connector">
+            <div class="dot" style="background:var(--blue)"></div>
+            <div class="line"></div>
+          </div>
+          <div class="flow-box">
+            <div class="step-label">STEP 03</div>
+            <div class="step-title">NestJS TenantGuard</div>
+            <div class="step-desc">Header se tenantSlug leti hai → DB se tenantId fetch karti hai → req.tenantId set karti hai</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-connector">
+            <div class="dot" style="background:var(--green)"></div>
+          </div>
+          <div class="flow-box">
+            <div class="step-label">STEP 04</div>
+            <div class="step-title">Controller & Service</div>
+            <div class="step-desc">@TenantId() decorator se tenantId milti hai → har DB query mein WHERE tenant_id = ? automatically</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── PAGE: ENTITIES ─── -->
+  <div id="page-entities" class="page">
+    <div class="page-header">
+      <div class="page-num">03 / 10</div>
+      <div class="page-title">Key Entities — Fields</div>
+      <div class="page-subtitle">Har entity ke important fields aur unka purpose.</div>
+    </div>
+    <div class="page-body">
+
+      <div class="section-title">BaseEntity — Har table mein ye fields hote hain</div>
+      <div class="card" style="border-color:rgba(167,139,250,0.3)">
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-note">Primary key · globally unique</span></div>
+          <div class="field-row"><span class="field-name">tenant_id</span><span class="field-type">UUID FK</span><span class="field-note">Isolation key — most important</span></div>
+          <div class="field-row"><span class="field-name">created_at</span><span class="field-type">timestamptz</span><span class="field-note">UTC mein store hota hai</span></div>
+          <div class="field-row"><span class="field-name">updated_at</span><span class="field-type">timestamptz</span><span class="field-note">Auto update on every change</span></div>
+          <div class="field-row"><span class="field-name">created_by</span><span class="field-type">UUID FK</span><span class="field-note">Audit trail — kaun banaya</span></div>
+          <div class="field-row"><span class="field-name">deleted_at</span><span class="field-type">timestamptz?</span><span class="field-note">Null = active · Soft delete</span></div>
+        </div>
+      </div>
+
+      <div class="section-title">Core Business Entities</div>
+      <div class="entity-grid">
+
+        <div class="entity-card">
+          <div class="entity-header">
+            <span class="entity-name" style="color:var(--purple)">tenants</span>
+            <span class="badge badge-purple">ROOT</span>
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">name</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">subdomain</span><span class="field-type">varchar unique</span></div>
+            <div class="field-row"><span class="field-name">plan</span><span class="field-type">enum</span><span class="field-note">free/pro/enterprise</span></div>
+            <div class="field-row"><span class="field-name">status</span><span class="field-type">enum</span><span class="field-note">active/suspended</span></div>
+            <div class="field-row"><span class="field-name">config</span><span class="field-type">JSONB</span><span class="field-note">stages, flags, locale</span></div>
+            <div class="field-row"><span class="field-name">locale</span><span class="field-type">varchar</span><span class="field-note">en-IN, en-US</span></div>
+            <div class="field-row"><span class="field-name">timezone</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">currency</span><span class="field-type">varchar</span><span class="field-note">INR, USD</span></div>
+          </div>
+        </div>
+
+        <div class="entity-card">
+          <div class="entity-header">
+            <span class="entity-name" style="color:var(--blue)">users</span>
+            <span class="badge badge-blue">ACTOR</span>
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">first_name</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">last_name</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">email</span><span class="field-type">varchar</span><span class="field-note">unique per tenant</span></div>
+            <div class="field-row"><span class="field-name">password_hash</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">status</span><span class="field-type">enum</span><span class="field-note">active/invited/disabled</span></div>
+            <div class="field-row"><span class="field-name">avatar_url</span><span class="field-type">varchar?</span></div>
+            <div class="field-row"><span class="field-name">last_login_at</span><span class="field-type">timestamptz?</span></div>
+          </div>
+        </div>
+
+        <div class="entity-card">
+          <div class="entity-header">
+            <span class="entity-name" style="color:var(--teal)">clients</span>
+            <span class="badge badge-teal">COMPANY</span>
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">company_name</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">industry</span><span class="field-type">varchar?</span></div>
+            <div class="field-row"><span class="field-name">website</span><span class="field-type">varchar?</span></div>
+            <div class="field-row"><span class="field-name">spoc_name</span><span class="field-type">varchar</span><span class="field-note">point of contact</span></div>
+            <div class="field-row"><span class="field-name">spoc_email</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">spoc_phone</span><span class="field-type">varchar?</span></div>
+            <div class="field-row"><span class="field-name">status</span><span class="field-type">enum</span><span class="field-note">active/inactive</span></div>
+          </div>
+        </div>
+
+        <div class="entity-card">
+          <div class="entity-header">
+            <span class="entity-name" style="color:var(--amber)">jobs</span>
+            <span class="badge badge-amber">JOB</span>
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">client_id</span><span class="field-type">UUID FK</span></div>
+            <div class="field-row"><span class="field-name">assigned_to</span><span class="field-type">UUID FK</span><span class="field-note">→ users</span></div>
+            <div class="field-row"><span class="field-name">title</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">description</span><span class="field-type">text?</span></div>
+            <div class="field-row"><span class="field-name">location</span><span class="field-type">varchar?</span></div>
+            <div class="field-row"><span class="field-name">job_type</span><span class="field-type">enum</span><span class="field-note">fulltime/contract/remote</span></div>
+            <div class="field-row"><span class="field-name">status</span><span class="field-type">enum</span><span class="field-note">draft/open/closed</span></div>
+            <div class="field-row"><span class="field-name">custom_fields</span><span class="field-type">JSONB</span></div>
+          </div>
+        </div>
+
+        <div class="entity-card">
+          <div class="entity-header">
+            <span class="entity-name" style="color:var(--coral)">pipelines</span>
+            <span class="badge badge-coral">FUNNEL</span>
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">job_id</span><span class="field-type">UUID FK</span></div>
+            <div class="field-row"><span class="field-name">name</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">stages</span><span class="field-type">JSONB[]</span><span class="field-note">array of stage objects</span></div>
+            <div class="field-row"><span class="field-name">is_default</span><span class="field-type">boolean</span></div>
+            <div class="field-row"><span class="field-name">status</span><span class="field-type">enum</span><span class="field-note">active/archived</span></div>
+          </div>
+        </div>
+
+        <div class="entity-card">
+          <div class="entity-header">
+            <span class="entity-name" style="color:var(--purple)">candidates</span>
+            <span class="badge badge-purple">PERSON</span>
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">first_name</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">last_name</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">email</span><span class="field-type">varchar</span></div>
+            <div class="field-row"><span class="field-name">phone</span><span class="field-type">varchar?</span></div>
+            <div class="field-row"><span class="field-name">resume_url</span><span class="field-type">varchar?</span></div>
+            <div class="field-row"><span class="field-name">source</span><span class="field-type">varchar?</span><span class="field-note">LinkedIn/portal/referral</span></div>
+            <div class="field-row"><span class="field-name">custom_fields</span><span class="field-type">JSONB</span></div>
+          </div>
+        </div>
+
+        <div class="entity-card">
+          <div class="entity-header">
+            <span class="entity-name" style="color:var(--gray)">pipeline_candidates</span>
+            <span class="badge" style="background:rgba(148,163,184,0.1);color:var(--gray);border-color:rgba(148,163,184,0.2)">PIVOT</span>
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">pipeline_id</span><span class="field-type">UUID FK</span></div>
+            <div class="field-row"><span class="field-name">candidate_id</span><span class="field-type">UUID FK</span></div>
+            <div class="field-row"><span class="field-name">current_stage</span><span class="field-type">varchar</span><span class="field-note">stage name from JSONB</span></div>
+            <div class="field-row"><span class="field-name">status</span><span class="field-type">enum</span><span class="field-note">active/rejected/hired/hold</span></div>
+            <div class="field-row"><span class="field-name">assigned_to</span><span class="field-type">UUID FK?</span></div>
+            <div class="field-row"><span class="field-name">notes</span><span class="field-type">text?</span></div>
+            <div class="field-row"><span class="field-name">stage_changed_at</span><span class="field-type">timestamptz</span></div>
+          </div>
+        </div>
+
+        <div class="entity-card">
+          <div class="entity-header">
+            <span class="entity-name" style="color:var(--green)">contracts</span>
+            <span class="badge badge-green">LEGAL</span>
+          </div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">client_id</span><span class="field-type">UUID FK</span></div>
+            <div class="field-row"><span class="field-name">job_id</span><span class="field-type">UUID FK</span></div>
+            <div class="field-row"><span class="field-name">user_id</span><span class="field-type">UUID FK</span></div>
+            <div class="field-row"><span class="field-name">type</span><span class="field-type">enum</span><span class="field-note">retainer/contingency</span></div>
+            <div class="field-row"><span class="field-name">fee_type</span><span class="field-type">enum</span><span class="field-note">flat/percent</span></div>
+            <div class="field-row"><span class="field-name">fee_value</span><span class="field-type">decimal</span></div>
+            <div class="field-row"><span class="field-name">valid_from</span><span class="field-type">date</span></div>
+            <div class="field-row"><span class="field-name">valid_until</span><span class="field-type">date</span></div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
-  <!-- Step 2: Goals -->
-  <div class="card">
-    <div class="card-title">02 — Apne Goals chuno</div>
-    <div class="goals-grid" id="goalsGrid"></div>
-    <div class="custom-goal">
-      <input type="text" id="customGoalInput" placeholder="Naya goal likho (jaise: Node.js)">
-      <button class="add-btn" onclick="addCustomGoal()">+ Add</button>
+  <!-- ─── PAGE: ER DIAGRAM ─── -->
+  <div id="page-erdiagram" class="page">
+    <div class="page-header">
+      <div class="page-num">04 / 10</div>
+      <div class="page-title">ER Diagram — Entity Relations</div>
+      <div class="page-subtitle">Tables ke beech ke relationships. Arrows = foreign key relationships.</div>
+    </div>
+    <div class="page-body">
+
+      <ul class="point-list" style="margin-bottom:24px">
+        <li><span class="point-num">01</span><span><strong>tenants</strong> — root table hai. Sab kuch tenants se connect hota hai tenant_id ke through.</span></li>
+        <li><span class="point-num">02</span><span><strong>users ↔ roles</strong> — many-to-many relationship hai, isliye <strong>user_roles</strong> pivot table hai beech mein.</span></li>
+        <li><span class="point-num">03</span><span><strong>jobs</strong> — client ke liye hoti hai aur ek user ko assign hoti hai.</span></li>
+        <li><span class="point-num">04</span><span><strong>pipeline_candidates</strong> — sabse important pivot table. Ek candidate multiple pipelines mein ho sakta hai, aur har jagah uska alag status hoga.</span></li>
+        <li><span class="point-num">05</span><span><strong>stage_activity_log</strong> — har baar candidate ka stage change hota hai, ek entry yahan banti hai. Full audit trail.</span></li>
+      </ul>
+
+      <div class="er-wrap">
+        <svg id="er-canvas" viewBox="0 0 1100 700" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="fk-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="pk-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M1 1L9 5L1 9" fill="none" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- ── TENANTS (center-top) ── -->
+          <g id="tbl-tenants">
+            <rect x="440" y="20" width="200" height="140" rx="8" fill="#141c2e" stroke="#a78bfa" stroke-width="1.5"/>
+            <rect x="440" y="20" width="200" height="32" rx="8" fill="#a78bfa" fill-opacity="0.2"/>
+            <text x="540" y="40" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono" font-size="12" font-weight="600">tenants</text>
+            <text x="452" y="70" fill="#60a5fa" font-family="JetBrains Mono" font-size="10">id</text><text x="580" y="70" fill="#fbbf24" font-family="JetBrains Mono" font-size="10">UUID PK</text>
+            <text x="452" y="86" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">name</text><text x="580" y="86" fill="#64748b" font-family="JetBrains Mono" font-size="10">varchar</text>
+            <text x="452" y="102" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">subdomain</text><text x="580" y="102" fill="#64748b" font-family="JetBrains Mono" font-size="10">unique</text>
+            <text x="452" y="118" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">plan</text><text x="580" y="118" fill="#64748b" font-family="JetBrains Mono" font-size="10">enum</text>
+            <text x="452" y="134" fill="#2dd4bf" font-family="JetBrains Mono" font-size="10">config</text><text x="580" y="134" fill="#2dd4bf" font-family="JetBrains Mono" font-size="10">JSONB</text>
+            <text x="452" y="150" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">locale/tz/currency</text>
+          </g>
+
+          <!-- ── USERS ── -->
+          <g id="tbl-users">
+            <rect x="60" y="220" width="190" height="140" rx="8" fill="#141c2e" stroke="#60a5fa" stroke-width="1.5"/>
+            <rect x="60" y="220" width="190" height="32" rx="8" fill="#60a5fa" fill-opacity="0.15"/>
+            <text x="155" y="240" text-anchor="middle" fill="#60a5fa" font-family="JetBrains Mono" font-size="12" font-weight="600">users</text>
+            <text x="72" y="270" fill="#60a5fa" font-family="JetBrains Mono" font-size="10">id</text><text x="180" y="270" fill="#fbbf24" font-family="JetBrains Mono" font-size="10">UUID PK</text>
+            <text x="72" y="286" fill="#fb7185" font-family="JetBrains Mono" font-size="10">tenant_id</text><text x="180" y="286" fill="#fb7185" font-family="JetBrains Mono" font-size="10">FK</text>
+            <text x="72" y="302" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">first_name</text>
+            <text x="72" y="318" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">last_name</text>
+            <text x="72" y="334" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">email</text>
+            <text x="72" y="350" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">password_hash</text>
+          </g>
+
+          <!-- ── CLIENTS ── -->
+          <g id="tbl-clients">
+            <rect x="820" y="220" width="200" height="140" rx="8" fill="#141c2e" stroke="#2dd4bf" stroke-width="1.5"/>
+            <rect x="820" y="220" width="200" height="32" rx="8" fill="#2dd4bf" fill-opacity="0.12"/>
+            <text x="920" y="240" text-anchor="middle" fill="#2dd4bf" font-family="JetBrains Mono" font-size="12" font-weight="600">clients</text>
+            <text x="832" y="270" fill="#60a5fa" font-family="JetBrains Mono" font-size="10">id</text><text x="960" y="270" fill="#fbbf24" font-family="JetBrains Mono" font-size="10">UUID PK</text>
+            <text x="832" y="286" fill="#fb7185" font-family="JetBrains Mono" font-size="10">tenant_id</text><text x="960" y="286" fill="#fb7185" font-family="JetBrains Mono" font-size="10">FK</text>
+            <text x="832" y="302" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">company_name</text>
+            <text x="832" y="318" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">industry</text>
+            <text x="832" y="334" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">spoc_name</text>
+            <text x="832" y="350" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">status</text>
+          </g>
+
+          <!-- ── ROLES ── -->
+          <g id="tbl-roles">
+            <rect x="60" y="440" width="200" height="140" rx="8" fill="#141c2e" stroke="#fbbf24" stroke-width="1.5"/>
+            <rect x="60" y="440" width="200" height="32" rx="8" fill="#fbbf24" fill-opacity="0.12"/>
+            <text x="160" y="460" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono" font-size="12" font-weight="600">roles</text>
+            <text x="72" y="490" fill="#60a5fa" font-family="JetBrains Mono" font-size="10">id</text><text x="190" y="490" fill="#fbbf24" font-family="JetBrains Mono" font-size="10">UUID PK</text>
+            <text x="72" y="506" fill="#fb7185" font-family="JetBrains Mono" font-size="10">tenant_id</text><text x="190" y="506" fill="#64748b" font-family="JetBrains Mono" font-size="10">nullable</text>
+            <text x="72" y="522" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">name</text>
+            <text x="72" y="538" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">slug</text>
+            <text x="72" y="554" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">is_system</text>
+            <text x="72" y="570" fill="#2dd4bf" font-family="JetBrains Mono" font-size="10">permissions</text><text x="190" y="570" fill="#2dd4bf" font-family="JetBrains Mono" font-size="10">JSONB</text>
+          </g>
+
+          <!-- ── USER_ROLES ── -->
+          <g id="tbl-user-roles">
+            <rect x="310" y="440" width="190" height="100" rx="8" fill="#141c2e" stroke="#94a3b8" stroke-width="1"/>
+            <rect x="310" y="440" width="190" height="28" rx="8" fill="#94a3b8" fill-opacity="0.1"/>
+            <text x="405" y="458" text-anchor="middle" fill="#94a3b8" font-family="JetBrains Mono" font-size="11" font-weight="600">user_roles</text>
+            <text x="322" y="484" fill="#fb7185" font-family="JetBrains Mono" font-size="10">user_id</text><text x="440" y="484" fill="#fb7185" font-family="JetBrains Mono" font-size="10">FK</text>
+            <text x="322" y="500" fill="#fb7185" font-family="JetBrains Mono" font-size="10">role_id</text><text x="440" y="500" fill="#fb7185" font-family="JetBrains Mono" font-size="10">FK</text>
+            <text x="322" y="516" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">assigned_by</text>
+            <text x="322" y="532" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">assigned_at</text>
+          </g>
+
+          <!-- ── JOBS ── -->
+          <g id="tbl-jobs">
+            <rect x="820" y="440" width="200" height="140" rx="8" fill="#141c2e" stroke="#60a5fa" stroke-width="1.5"/>
+            <rect x="820" y="440" width="200" height="32" rx="8" fill="#60a5fa" fill-opacity="0.12"/>
+            <text x="920" y="460" text-anchor="middle" fill="#60a5fa" font-family="JetBrains Mono" font-size="12" font-weight="600">jobs</text>
+            <text x="832" y="490" fill="#60a5fa" font-family="JetBrains Mono" font-size="10">id</text><text x="960" y="490" fill="#fbbf24" font-family="JetBrains Mono" font-size="10">UUID PK</text>
+            <text x="832" y="506" fill="#fb7185" font-family="JetBrains Mono" font-size="10">tenant_id</text><text x="960" y="506" fill="#fb7185" font-family="JetBrains Mono" font-size="10">FK</text>
+            <text x="832" y="522" fill="#fb7185" font-family="JetBrains Mono" font-size="10">client_id</text><text x="960" y="522" fill="#fb7185" font-family="JetBrains Mono" font-size="10">FK</text>
+            <text x="832" y="538" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">title</text>
+            <text x="832" y="554" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">status</text>
+            <text x="832" y="570" fill="#2dd4bf" font-family="JetBrains Mono" font-size="10">custom_fields</text><text x="960" y="570" fill="#2dd4bf" font-family="JetBrains Mono" font-size="10">JSONB</text>
+          </g>
+
+          <!-- ── PIPELINES ── -->
+          <g id="tbl-pipelines">
+            <rect x="450" y="300" width="200" height="120" rx="8" fill="#141c2e" stroke="#fb7185" stroke-width="1.5"/>
+            <rect x="450" y="300" width="200" height="30" rx="8" fill="#fb7185" fill-opacity="0.12"/>
+            <text x="550" y="319" text-anchor="middle" fill="#fb7185" font-family="JetBrains Mono" font-size="12" font-weight="600">pipelines</text>
+            <text x="462" y="346" fill="#60a5fa" font-family="JetBrains Mono" font-size="10">id</text>
+            <text x="462" y="362" fill="#fb7185" font-family="JetBrains Mono" font-size="10">tenant_id · job_id</text><text x="595" y="362" fill="#fb7185" font-family="JetBrains Mono" font-size="10">FKs</text>
+            <text x="462" y="378" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">name</text>
+            <text x="462" y="394" fill="#2dd4bf" font-family="JetBrains Mono" font-size="10">stages</text><text x="595" y="394" fill="#2dd4bf" font-family="JetBrains Mono" font-size="10">JSONB[]</text>
+            <text x="462" y="410" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">is_default · status</text>
+          </g>
+
+          <!-- ── CANDIDATES ── -->
+          <g id="tbl-candidates">
+            <rect x="450" y="500" width="200" height="120" rx="8" fill="#141c2e" stroke="#a78bfa" stroke-width="1.5"/>
+            <rect x="450" y="500" width="200" height="30" rx="8" fill="#a78bfa" fill-opacity="0.15"/>
+            <text x="550" y="519" text-anchor="middle" fill="#a78bfa" font-family="JetBrains Mono" font-size="12" font-weight="600">candidates</text>
+            <text x="462" y="546" fill="#60a5fa" font-family="JetBrains Mono" font-size="10">id</text>
+            <text x="462" y="562" fill="#fb7185" font-family="JetBrains Mono" font-size="10">tenant_id</text><text x="595" y="562" fill="#fb7185" font-family="JetBrains Mono" font-size="10">FK</text>
+            <text x="462" y="578" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">first_name · last_name</text>
+            <text x="462" y="594" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">email · phone</text>
+            <text x="462" y="610" fill="#2dd4bf" font-family="JetBrains Mono" font-size="10">custom_fields JSONB</text>
+          </g>
+
+          <!-- ── PIPELINE_CANDIDATES ── -->
+          <g id="tbl-pc">
+            <rect x="700" y="580" width="195" height="110" rx="8" fill="#141c2e" stroke="#64748b" stroke-width="1"/>
+            <rect x="700" y="580" width="195" height="28" rx="8" fill="#64748b" fill-opacity="0.15"/>
+            <text x="797" y="598" text-anchor="middle" fill="#94a3b8" font-family="JetBrains Mono" font-size="10" font-weight="600">pipeline_candidates</text>
+            <text x="712" y="622" fill="#fb7185" font-family="JetBrains Mono" font-size="10">pipeline_id · candidate_id</text><text x="870" y="622" fill="#fb7185" font-family="JetBrains Mono" font-size="10">FKs</text>
+            <text x="712" y="638" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">current_stage</text>
+            <text x="712" y="654" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">status · notes</text>
+            <text x="712" y="670" fill="#94a3b8" font-family="JetBrains Mono" font-size="10">stage_changed_at</text>
+          </g>
+
+          <!-- ═══ RELATIONSHIPS ═══ -->
+          <!-- tenants → users -->
+          <path d="M 440 100 L 155 220" fill="none" stroke="#38bdf8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#fk-arrow)"/>
+          <!-- tenants → clients -->
+          <path d="M 640 100 L 870 220" fill="none" stroke="#38bdf8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#fk-arrow)"/>
+          <!-- tenants → roles (via tenant_id nullable) -->
+          <path d="M 500 160 L 200 440" fill="none" stroke="#38bdf8" stroke-width="0.8" stroke-dasharray="3,4" opacity="0.4" marker-end="url(#fk-arrow)"/>
+          <!-- users → user_roles -->
+          <path d="M 250 360 L 370 440" fill="none" stroke="#38bdf8" stroke-width="1" marker-end="url(#fk-arrow)"/>
+          <!-- roles → user_roles -->
+          <path d="M 260 510 L 308 500" fill="none" stroke="#38bdf8" stroke-width="1" marker-end="url(#fk-arrow)"/>
+          <!-- clients → jobs -->
+          <path d="M 920 360 L 920 440" fill="none" stroke="#38bdf8" stroke-width="1" marker-end="url(#fk-arrow)"/>
+          <!-- jobs → pipelines -->
+          <path d="M 820 510 L 650 390" fill="none" stroke="#38bdf8" stroke-width="1" marker-end="url(#fk-arrow)"/>
+          <!-- pipelines → pipeline_candidates -->
+          <path d="M 650 390 L 750 580" fill="none" stroke="#38bdf8" stroke-width="1" marker-end="url(#fk-arrow)"/>
+          <!-- candidates → pipeline_candidates -->
+          <path d="M 650 560 L 750 620" fill="none" stroke="#38bdf8" stroke-width="1" marker-end="url(#fk-arrow)"/>
+
+          <!-- Legend -->
+          <g transform="translate(20, 645)">
+            <line x1="0" y1="8" x2="30" y2="8" stroke="#38bdf8" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#fk-arrow)"/>
+            <text x="36" y="12" fill="#64748b" font-family="JetBrains Mono" font-size="9">tenant_id FK</text>
+            <line x1="120" y1="8" x2="150" y2="8" stroke="#38bdf8" stroke-width="1" marker-end="url(#fk-arrow)"/>
+            <text x="156" y="12" fill="#64748b" font-family="JetBrains Mono" font-size="9">direct FK</text>
+            <rect x="250" y="2" width="10" height="10" rx="2" fill="none" stroke="#2dd4bf" stroke-width="1"/>
+            <text x="266" y="12" fill="#2dd4bf" font-family="JetBrains Mono" font-size="9">JSONB column</text>
+          </g>
+        </svg>
+      </div>
     </div>
   </div>
 
-  <!-- Step 3: Sheets info -->
-  <div class="card">
-    <div class="card-title">03 — File mein ye 4 sheets hongi</div>
-    <div class="sheets-info">
-      <div class="sheet-chip"><div class="icon">🎯</div><div class="info"><span class="name">Weekly Tracker</span><span class="desc">Mon–Sun goals + circles</span></div></div>
-      <div class="sheet-chip"><div class="icon">📅</div><div class="info"><span class="name">Monthly Habit Grid</span><span class="desc">31 din ka full grid</span></div></div>
-      <div class="sheet-chip"><div class="icon">⏰</div><div class="info"><span class="name">Daily Planner</span><span class="desc">Time blocks + reflection</span></div></div>
-      <div class="sheet-chip"><div class="icon">✅</div><div class="info"><span class="name">Todo List</span><span class="desc">Aaj / Hafta / Someday</span></div></div>
+  <!-- ─── PAGE: JSONB ─── -->
+  <div id="page-jsonb" class="page">
+    <div class="page-header">
+      <div class="page-num">05 / 10</div>
+      <div class="page-title">JSONB Fields — Flexible Data</div>
+      <div class="page-subtitle">JSONB use karte hain jahan structure tenant-by-tenant alag hoga. Schema migration ki zaroorat nahi.</div>
+    </div>
+    <div class="page-body">
+
+      <ul class="point-list" style="margin-bottom:24px">
+        <li><span class="point-num">01</span><span><strong>JSONB kyon?</strong> — Agar tumhe ek naya column add karna ho to normally migration likhna padta hai. JSONB mein koi bhi key-value store ho sakti hai — tenant ko koi downtime nahi.</span></li>
+        <li><span class="point-num">02</span><span><strong>Schema definition</strong> — JSONB ka structure <code style="color:var(--teal)">tenant.config</code> mein define hota hai. Frontend usi se validate karta hai.</span></li>
+        <li><span class="point-num">03</span><span><strong>Queryable</strong> — PostgreSQL JSONB pe indexes laga sakte ho aur <code style="color:var(--teal)">-></code> operator se query kar sakte ho.</span></li>
+      </ul>
+
+      <div class="section-title">1. tenant.config — Sabse important JSONB</div>
+      <div class="code-block">
+<span class="comment">// GET /tenants/config — Login ke baad ye object milta hai frontend ko</span>
+{
+  <span class="key">"pipeline_stages"</span>: [
+    { <span class="key">"id"</span>: <span class="str">"s1"</span>, <span class="key">"name"</span>: <span class="str">"Applied"</span>, <span class="key">"order"</span>: <span class="num">1</span>, <span class="key">"type"</span>: <span class="str">"screening"</span>, <span class="key">"color"</span>: <span class="str">"#60a5fa"</span>, <span class="key">"is_terminal"</span>: <span class="bool">false</span> },
+    { <span class="key">"id"</span>: <span class="str">"s2"</span>, <span class="key">"name"</span>: <span class="str">"Technical Round"</span>, <span class="key">"order"</span>: <span class="num">2</span>, <span class="key">"type"</span>: <span class="str">"interview"</span>, <span class="key">"color"</span>: <span class="str">"#a78bfa"</span>, <span class="key">"sla_hours"</span>: <span class="num">48</span> },
+    { <span class="key">"id"</span>: <span class="str">"s3"</span>, <span class="key">"name"</span>: <span class="str">"HR Round"</span>, <span class="key">"order"</span>: <span class="num">3</span>, <span class="key">"type"</span>: <span class="str">"interview"</span>, <span class="key">"color"</span>: <span class="str">"#2dd4bf"</span> },
+    { <span class="key">"id"</span>: <span class="str">"s4"</span>, <span class="key">"name"</span>: <span class="str">"Offer"</span>, <span class="key">"order"</span>: <span class="num">4</span>, <span class="key">"type"</span>: <span class="str">"offer"</span>, <span class="key">"color"</span>: <span class="str">"#fbbf24"</span> },
+    { <span class="key">"id"</span>: <span class="str">"s5"</span>, <span class="key">"name"</span>: <span class="str">"Hired"</span>, <span class="key">"order"</span>: <span class="num">5</span>, <span class="key">"type"</span>: <span class="str">"hired"</span>, <span class="key">"color"</span>: <span class="str">"#4ade80"</span>, <span class="key">"is_terminal"</span>: <span class="bool">true</span> }
+  ],
+  <span class="key">"custom_candidate_fields"</span>: [
+    { <span class="key">"key"</span>: <span class="str">"notice_period"</span>, <span class="key">"label"</span>: <span class="str">"Notice Period"</span>, <span class="key">"type"</span>: <span class="str">"text"</span>, <span class="key">"required"</span>: <span class="bool">true</span> },
+    { <span class="key">"key"</span>: <span class="str">"current_ctc"</span>, <span class="key">"label"</span>: <span class="str">"Current CTC"</span>, <span class="key">"type"</span>: <span class="str">"number"</span> },
+    { <span class="key">"key"</span>: <span class="str">"expected_ctc"</span>, <span class="key">"label"</span>: <span class="str">"Expected CTC"</span>, <span class="key">"type"</span>: <span class="str">"number"</span> }
+  ],
+  <span class="key">"feature_flags"</span>: {
+    <span class="key">"bulk_import"</span>: <span class="bool">true</span>,
+    <span class="key">"ai_screening"</span>: <span class="bool">false</span>,
+    <span class="key">"whatsapp_notifications"</span>: <span class="bool">true</span>,
+    <span class="key">"video_interviews"</span>: <span class="bool">false</span>
+  },
+  <span class="key">"locale"</span>: <span class="str">"en-IN"</span>,
+  <span class="key">"currency"</span>: <span class="str">"INR"</span>,
+  <span class="key">"date_format"</span>: <span class="str">"DD/MM/YYYY"</span>
+}
+      </div>
+
+      <div class="section-title" style="margin-top:28px">2. roles.permissions JSONB</div>
+      <div class="code-block">
+<span class="comment">// Admin role ka permissions object</span>
+{
+  <span class="key">"jobs"</span>:       { <span class="key">"create"</span>: <span class="bool">true</span>,  <span class="key">"read"</span>: <span class="bool">true</span>,  <span class="key">"update"</span>: <span class="bool">true</span>,  <span class="key">"delete"</span>: <span class="bool">true</span>  },
+  <span class="key">"candidates"</span>: { <span class="key">"create"</span>: <span class="bool">true</span>,  <span class="key">"read"</span>: <span class="bool">true</span>,  <span class="key">"update"</span>: <span class="bool">true</span>,  <span class="key">"delete"</span>: <span class="bool">true</span>  },
+  <span class="key">"pipelines"</span>:  { <span class="key">"create"</span>: <span class="bool">true</span>,  <span class="key">"manage"</span>: <span class="bool">true</span> },
+  <span class="key">"clients"</span>:    { <span class="key">"create"</span>: <span class="bool">true</span>,  <span class="key">"read"</span>: <span class="bool">true</span>,  <span class="key">"update"</span>: <span class="bool">true</span>  },
+  <span class="key">"contracts"</span>:  { <span class="key">"create"</span>: <span class="bool">true</span>,  <span class="key">"read"</span>: <span class="bool">true</span>  },
+  <span class="key">"users"</span>:      { <span class="key">"invite"</span>: <span class="bool">true</span>,  <span class="key">"manage_roles"</span>: <span class="bool">true</span> },
+  <span class="key">"reports"</span>:    { <span class="key">"view"</span>: <span class="bool">true</span>,   <span class="key">"export"</span>: <span class="bool">true</span>  }
+}
+
+<span class="comment">// NestJS Guard mein check kaise hota hai:</span>
+<span class="comment">// req.user.permissions.jobs.create === true</span>
+      </div>
+
     </div>
   </div>
 
-  <!-- Generate -->
-  <button class="gen-btn" id="genBtn" onclick="generateExcel()">
-    ⚡ GENERATE &amp; DOWNLOAD EXCEL
-  </button>
+  <!-- ─── PAGE: ROLES ─── -->
+  <div id="page-roles" class="page">
+    <div class="page-header">
+      <div class="page-num">06 / 10</div>
+      <div class="page-title">Roles & Permissions</div>
+      <div class="page-subtitle">System roles fixed hain. Tenant apne custom roles bana sakta hai inhe copy karke.</div>
+    </div>
+    <div class="page-body">
 
-  <!-- Progress -->
-  <div class="progress-wrap" id="progressWrap">
-    <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
-    <div class="progress-text" id="progressText">Generating...</div>
+      <ul class="point-list" style="margin-bottom:24px">
+        <li><span class="point-num">01</span><span><strong>is_system = true</strong> — Ye roles system deta hai. Tenant inhe delete ya edit nahi kar sakta.</span></li>
+        <li><span class="point-num">02</span><span><strong>is_system = false</strong> — Tenant ke custom roles. Admin unhe banata hai kisi system role ko copy karke.</span></li>
+        <li><span class="point-num">03</span><span><strong>tenant_id = null</strong> — System roles ka tenant_id null hota hai. Matlab sab tenants ke liye available.</span></li>
+        <li><span class="point-num">04</span><span><strong>Permission check</strong> — Guard mein: <code style="color:var(--teal)">req.user.permissions[resource][action]</code> check hota hai.</span></li>
+      </ul>
+
+      <div class="section-title">Permission Matrix — System Roles</div>
+      <table class="perm-table">
+        <thead>
+          <tr>
+            <th>Resource · Action</th>
+            <th>admin</th>
+            <th>recruiter</th>
+            <th>viewer</th>
+            <th>client_spoc</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>jobs · create</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+          <tr><td>jobs · read</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="partial">own</span></td></tr>
+          <tr><td>jobs · delete</td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+          <tr><td>candidates · create</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+          <tr><td>candidates · move_stage</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+          <tr><td>clients · create</td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+          <tr><td>contracts · create</td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+          <tr><td>users · invite</td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+          <tr><td>users · manage_roles</td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+          <tr><td>reports · view</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">—</span></td></tr>
+          <tr><td>reports · export</td><td><span class="check">✓</span></td><td><span class="partial">ltd</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+        </tbody>
+      </table>
+
+    </div>
   </div>
 
-  <!-- Success -->
-  <div class="success" id="successBox">
-    <div class="success-icon">🎉</div>
-    <h3>Excel Ready! Download ho gaya!</h3>
-    <p id="successMsg">Print karo aur wall pe lagao. Roz dekho, roz karo. 💪</p>
+  <!-- ─── PAGE: REGISTRATION ─── -->
+  <div id="page-registration" class="page">
+    <div class="page-header">
+      <div class="page-num">07 / 10</div>
+      <div class="page-title">Registration Flow</div>
+      <div class="page-subtitle">Pehli baar register karne par kya kya hota hai — step by step.</div>
+    </div>
+    <div class="page-body">
+
+      <ul class="point-list" style="margin-bottom:28px">
+        <li><span class="point-num">KEY</span><span>Pura registration ek <strong>DB Transaction</strong> mein hota hai — ek bhi step fail ho to sab rollback ho jata hai. Partial state kabhi nahi banega.</span></li>
+      </ul>
+
+      <div class="reg-flow">
+        <div class="reg-step">
+          <div class="reg-step-title">1. Frontend — Form Submit</div>
+          <div class="reg-step-body">
+            User form bharta hai: company_name, subdomain, email, password<br>
+            POST /auth/register API call hoti hai
+            <div class="note">→ axios global instance use hota hai — manually URL nahi likhte</div>
+          </div>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-title">2. NestJS — ValidationPipe</div>
+          <div class="reg-step-body">
+            Global ValidationPipe DTO validate karta hai automatically<br>
+            Email format check, subdomain uniqueness check, password length check
+            <div class="note">→ ye globally registered hai — controller mein kuch nahi likhna</div>
+          </div>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-title">3. DB Transaction Start</div>
+          <div class="reg-step-body">
+            TypeORM transaction start hoti hai — sab ek saath commit hoga
+          </div>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-title">4. Tenant Row Create</div>
+          <div class="reg-step-body">
+            tenants table mein naya record banta hai<br>
+            config JSONB mein default stages, default locale, feature_flags (sab off) set hote hain<br>
+            plan = 'free' by default
+            <div class="note">→ tenant ka unique ID generate hota hai (UUID)</div>
+          </div>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-title">5. User Row Create</div>
+          <div class="reg-step-body">
+            users table mein pehla user banta hai<br>
+            password bcrypt se hash hota hai — plain text kabhi store nahi hota<br>
+            tenant_id = abhi banaye gaye tenant ka ID
+          </div>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-title">6. System Roles Seed + Admin Assign</div>
+          <div class="reg-step-body">
+            4 system roles create hote hain: admin, recruiter, viewer, client_spoc<br>
+            user_roles table mein pehle user ko admin role assign hoti hai<br>
+            JWT token generate hota hai — payload mein: { userId, tenantId, roles, permissions }
+            <div class="note">→ Transaction commit · Frontend ko token milta hai · Config fetch · Dashboard redirect</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
-</div>
+  <!-- ─── PAGE: BACKEND ─── -->
+  <div id="page-backend" class="page">
+    <div class="page-header">
+      <div class="page-num">08 / 10</div>
+      <div class="page-title">NestJS Backend Structure</div>
+      <div class="page-subtitle">Global middleware ek baar register hote hain. Feature modules apne andar sab kuch rakhte hain.</div>
+    </div>
+    <div class="page-body">
+
+      <div class="section-title">main.ts — Global Registrations</div>
+      <ul class="point-list" style="margin-bottom:20px">
+        <li><span class="point-num">01</span><span><code style="color:var(--teal)">app.useGlobalPipes(ValidationPipe)</code> — har DTO automatically validate hogi. Controller mein kuch nahi likhna.</span></li>
+        <li><span class="point-num">02</span><span><code style="color:var(--teal)">app.useGlobalGuards(JwtAuthGuard, TenantGuard, RolesGuard)</code> — har route protected. @Public() decorator se bypass kar sakte ho login jaise routes ke liye.</span></li>
+        <li><span class="point-num">03</span><span><code style="color:var(--teal)">app.useGlobalInterceptors(TransformInterceptor)</code> — har response ek fixed format mein aayegi: <code style="color:var(--amber)">{"data": ..., "meta": ..., "status": 200}</code></span></li>
+        <li><span class="point-num">04</span><span><code style="color:var(--teal)">app.useGlobalFilters(GlobalExceptionFilter)</code> — koi bhi error kabhi raw nahi jayega. Standard error shape: <code style="color:var(--amber)">{"error": ..., "message": ..., "code": ...}</code></span></li>
+      </ul>
+
+      <div class="section-title">Folder Structure</div>
+      <div class="layer-stack">
+        <div class="layer" style="background:var(--purple-dim); border-color:rgba(167,139,250,0.25)">
+          <div class="layer-label" style="color:var(--purple)">src/common/</div>
+          <div class="layer-title" style="font-size:13px">Global shared code — sab modules isko use karte hain</div>
+          <div class="layer-items">
+            <span class="chip">guards/jwt.guard.ts</span>
+            <span class="chip">guards/tenant.guard.ts</span>
+            <span class="chip">guards/roles.guard.ts</span>
+            <span class="chip">interceptors/transform.interceptor.ts</span>
+            <span class="chip">interceptors/logging.interceptor.ts</span>
+            <span class="chip">filters/global-exception.filter.ts</span>
+            <span class="chip">decorators/@CurrentUser</span>
+            <span class="chip">decorators/@TenantId</span>
+            <span class="chip">decorators/@Roles</span>
+          </div>
+        </div>
+        <div class="layer" style="background:var(--teal-dim); border-color:rgba(45,212,191,0.2)">
+          <div class="layer-label" style="color:var(--teal)">src/database/</div>
+          <div class="layer-title" style="font-size:13px">BaseEntity + migrations + seeds</div>
+          <div class="layer-items">
+            <span class="chip">entities/base.entity.ts</span>
+            <span class="chip">migrations/</span>
+            <span class="chip">seeds/system-roles.seed.ts</span>
+          </div>
+        </div>
+        <div class="layer" style="background:var(--blue-dim); border-color:rgba(96,165,250,0.2)">
+          <div class="layer-label" style="color:var(--blue)">src/[feature]/  — each module is self-contained</div>
+          <div class="layer-title" style="font-size:13px">Auth · Tenants · Users · Roles · Clients · Jobs · Pipelines · Candidates · Contracts · Reports</div>
+          <div class="layer-items">
+            <span class="chip">[feature].module.ts</span>
+            <span class="chip">[feature].controller.ts</span>
+            <span class="chip">[feature].service.ts</span>
+            <span class="chip">[feature].entity.ts</span>
+            <span class="chip">dto/create-[feature].dto.ts</span>
+            <span class="chip">dto/update-[feature].dto.ts</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:24px">Golden Rule</div>
+      <ul class="point-list">
+        <li><span class="point-num">→</span><span>Koi bhi feature module directly doosre module ka service inject nahi karega. Communication sirf <strong>EventEmitter2 events</strong> se hogi. Isse loose coupling rehti hai.</span></li>
+        <li><span class="point-num">→</span><span>Jab job banta hai → JobCreatedEvent emit hota hai → PipelineModule isko sun ke default pipeline bana deta hai. Jobs module ko pata nahi ki Pipeline exist bhi karta hai.</span></li>
+      </ul>
+
+    </div>
+  </div>
+
+  <!-- ─── PAGE: FRONTEND ─── -->
+  <div id="page-frontend" class="page">
+    <div class="page-header">
+      <div class="page-num">09 / 10</div>
+      <div class="page-title">Next.js Frontend Structure</div>
+      <div class="page-subtitle">Ek global setup, har feature module isko use karta hai. Tenant config se dynamic UI.</div>
+    </div>
+    <div class="page-body">
+
+      <div class="section-title">lib/ — Global Setup (ek baar)</div>
+      <ul class="point-list" style="margin-bottom:20px">
+        <li><span class="point-num">01</span><span><strong>axios.ts</strong> — Ek axios instance banao. baseURL, timeout, token auto-attach, 401 pe logout — sab yahan. Poori app isi instance se calls karti hai.</span></li>
+        <li><span class="point-num">02</span><span><strong>query-client.ts</strong> — TanStack QueryClient globally configure hota hai. staleTime: 5min, retry: 2, global error handler. Har component isko import karta hai.</span></li>
+        <li><span class="point-num">03</span><span><strong>i18n.ts</strong> — Language setup ek baar. Tenant config se locale aata hai — en-IN, en-US wagera.</span></li>
+      </ul>
+
+      <div class="section-title">Data Flow Pattern</div>
+      <div class="layer-stack">
+        <div class="layer" style="background:var(--coral-dim); border-color:rgba(251,113,133,0.2)">
+          <div class="layer-label" style="color:var(--coral)">services/jobs.service.ts</div>
+          <div class="layer-title" style="font-size:13px">Sirf axios calls — koi logic nahi</div>
+          <div class="layer-items">
+            <span class="chip">getJobs(params)</span>
+            <span class="chip">createJob(data)</span>
+            <span class="chip">updateJob(id, data)</span>
+          </div>
+        </div>
+        <div style="text-align:center; color:var(--text-dim); font-size:20px; padding:4px">↓</div>
+        <div class="layer" style="background:var(--teal-dim); border-color:rgba(45,212,191,0.2)">
+          <div class="layer-label" style="color:var(--teal)">hooks/useJobs.ts</div>
+          <div class="layer-title" style="font-size:13px">service ko useQuery/useMutation mein wrap karo</div>
+          <div class="layer-items">
+            <span class="chip">useJobs() → { data, isLoading, error }</span>
+            <span class="chip">useCreateJob() → mutation</span>
+          </div>
+        </div>
+        <div style="text-align:center; color:var(--text-dim); font-size:20px; padding:4px">↓</div>
+        <div class="layer" style="background:var(--blue-dim); border-color:rgba(96,165,250,0.2)">
+          <div class="layer-label" style="color:var(--blue)">components/jobs/JobsList.tsx</div>
+          <div class="layer-title" style="font-size:13px">Sirf props leta hai — API ka koi knowledge nahi</div>
+          <div class="layer-items">
+            <span class="chip">const { data } = useJobs()</span>
+            <span class="chip">return &lt;JobCard&gt; for each job</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:24px">store/ — Client State (Zustand)</div>
+      <ul class="point-list">
+        <li><span class="point-num">01</span><span><strong>tenant-config.store.ts</strong> — Login ke baad tenant config yahan store hoti hai. Feature flags, custom fields, stages — frontend isko read karke UI banata hai.</span></li>
+        <li><span class="point-num">02</span><span><strong>auth.store.ts</strong> — User info, token, permissions yahan rehte hain. Server state TanStack Query mein, client state Zustand mein.</span></li>
+      </ul>
+
+      <div class="section-title">middleware.ts — Edge Layer</div>
+      <ul class="point-list">
+        <li><span class="point-num">→</span><span>Next.js middleware edge pe chalta hai — server hit hone se pehle. Unauthenticated users ko login page redirect karta hai. Subdomain se tenantSlug extract karke header mein add karta hai.</span></li>
+      </ul>
+
+    </div>
+  </div>
+
+  <!-- ─── PAGE: REQUEST FLOW ─── -->
+  <div id="page-requestflow" class="page">
+    <div class="page-header">
+      <div class="page-num">10 / 10</div>
+      <div class="page-title">Complete Request Flow</div>
+      <div class="page-subtitle">Browser se Database tak — ek request ka poora safar.</div>
+    </div>
+    <div class="page-body">
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-connector"><div class="dot" style="background:var(--purple)"></div><div class="line"></div></div>
+          <div class="flow-box">
+            <div class="step-label">BROWSER</div>
+            <div class="step-title">User action — "Jobs list dekho"</div>
+            <div class="step-desc">acme.yourats.com/jobs pe navigate karta hai</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-connector"><div class="dot" style="background:var(--teal)"></div><div class="line"></div></div>
+          <div class="flow-box">
+            <div class="step-label">NEXT.JS MIDDLEWARE (Edge)</div>
+            <div class="step-title">Token check + tenant header</div>
+            <div class="step-desc">Cookie mein JWT nahi → redirect /login. JWT hai → x-tenant-slug: "acme" header add karo</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-connector"><div class="dot" style="background:var(--blue)"></div><div class="line"></div></div>
+          <div class="flow-box">
+            <div class="step-label">TANSTACK QUERY + AXIOS</div>
+            <div class="step-title">Cache check → API call</div>
+            <div class="step-desc">Cache fresh hai → cached data return. Stale hai → GET /jobs API call. Axios interceptor JWT header auto-attach karta hai.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-connector"><div class="dot" style="background:var(--coral)"></div><div class="line"></div></div>
+          <div class="flow-box">
+            <div class="step-label">NESTJS — GLOBAL GUARDS</div>
+            <div class="step-title">JwtGuard → TenantGuard → RolesGuard</div>
+            <div class="step-desc">Token verify. tenantId resolve. jobs.read permission check. Ek bhi fail → 401/403 response, controller tak nahi pahunchta.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-connector"><div class="dot" style="background:var(--amber)"></div><div class="line"></div></div>
+          <div class="flow-box">
+            <div class="step-label">NESTJS — GLOBAL INTERCEPTOR</div>
+            <div class="step-title">TransformInterceptor wraps response</div>
+            <div class="step-desc">Controller se data aata hai → interceptor use {"data": [...], "meta": {"total": 42}, "status": 200} mein wrap karta hai</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-connector"><div class="dot" style="background:var(--green)"></div><div class="line"></div></div>
+          <div class="flow-box">
+            <div class="step-label">JOBS CONTROLLER + SERVICE</div>
+            <div class="step-title">@TenantId() se tenantId milti hai</div>
+            <div class="step-desc">Service ko tenantId milta hai → Repository WHERE tenant_id = ? AND deleted_at IS NULL lagata hai</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-connector"><div class="dot" style="background:#e879f9"></div></div>
+          <div class="flow-box">
+            <div class="step-label">POSTGRESQL</div>
+            <div class="step-title">RLS + Query execute</div>
+            <div class="step-desc">Row Level Security extra safety layer. Sirf is tenant ke jobs return hote hain → Response back to frontend</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PAGE: PIPELINE ─── -->
+  <div id="page-pipeline" class="page">
+    <div class="page-header">
+      <div class="page-num">Bonus</div>
+      <div class="page-title">Pipeline & Candidate Logic</div>
+      <div class="page-subtitle">Ek candidate multiple pipelines mein kaise hota hai — aur har jagah alag status.</div>
+    </div>
+    <div class="page-body">
+
+      <ul class="point-list" style="margin-bottom:24px">
+        <li><span class="point-num">01</span><span><strong>Candidate tenant-level entity hai</strong> — matlab Rahul Kumar ek baar candidate table mein hoga. Uski profile ek baar store hogi.</span></li>
+        <li><span class="point-num">02</span><span><strong>pipeline_candidates</strong> — jab Rahul ko kisi pipeline mein add karo, to ek row yahan banti hai. Is row mein uska current_stage aur status store hota hai.</span></li>
+        <li><span class="point-num">03</span><span><strong>Ek candidate — 2 jobs mein apply</strong> → 2 pipeline_candidates rows. Ek mein "Technical Round" stage ho sakta hai, doosre mein "Offer" — completely independent.</span></li>
+        <li><span class="point-num">04</span><span><strong>stage_activity_log</strong> — jab bhi stage change hota hai, ek log entry banti hai. Full history: kab kaunse stage se kaunse stage pe gaya, kisne move kiya.</span></li>
+      </ul>
+
+      <div class="section-title">Pipeline Stages — Tenant Customize kar sakta hai</div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:20px">Tenant A (IT Company) ke stages:</div>
+        <div class="stages-demo">
+          <div class="stage-pill">
+            <div class="stage-box" style="background:rgba(96,165,250,0.1);border-color:rgba(96,165,250,0.4);color:#60a5fa">Applied</div>
+            <div class="stage-arrow" style="background:rgba(96,165,250,0.3)"></div>
+          </div>
+          <div class="stage-pill">
+            <div class="stage-box" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.4);color:#a78bfa">Screening</div>
+            <div class="stage-arrow" style="background:rgba(167,139,250,0.3)"></div>
+          </div>
+          <div class="stage-pill">
+            <div class="stage-box" style="background:rgba(45,212,191,0.1);border-color:rgba(45,212,191,0.4);color:#2dd4bf">Technical</div>
+            <div class="stage-arrow" style="background:rgba(45,212,191,0.3)"></div>
+          </div>
+          <div class="stage-pill">
+            <div class="stage-box" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.4);color:#fbbf24">HR Round</div>
+            <div class="stage-arrow" style="background:rgba(251,191,36,0.3)"></div>
+          </div>
+          <div class="stage-pill">
+            <div class="stage-box" style="background:rgba(251,113,133,0.1);border-color:rgba(251,113,133,0.4);color:#fb7185">Offer</div>
+            <div class="stage-arrow" style="background:rgba(251,113,133,0.3)"></div>
+          </div>
+          <div class="stage-box" style="background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.5);color:#4ade80">Hired</div>
+        </div>
+        <div class="card-title" style="margin-bottom:20px; margin-top:20px">Tenant B (BPO Company) ke stages — alag hain, same code:</div>
+        <div class="stages-demo">
+          <div class="stage-pill">
+            <div class="stage-box" style="background:rgba(96,165,250,0.1);border-color:rgba(96,165,250,0.4);color:#60a5fa">Applied</div>
+            <div class="stage-arrow" style="background:rgba(96,165,250,0.3)"></div>
+          </div>
+          <div class="stage-pill">
+            <div class="stage-box" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.4);color:#fbbf24">Aptitude Test</div>
+            <div class="stage-arrow" style="background:rgba(251,191,36,0.3)"></div>
+          </div>
+          <div class="stage-pill">
+            <div class="stage-box" style="background:rgba(251,113,133,0.1);border-color:rgba(251,113,133,0.4);color:#fb7185">Group Discussion</div>
+            <div class="stage-arrow" style="background:rgba(251,113,133,0.3)"></div>
+          </div>
+          <div class="stage-pill">
+            <div class="stage-box" style="background:rgba(45,212,191,0.1);border-color:rgba(45,212,191,0.4);color:#2dd4bf">Background Check</div>
+            <div class="stage-arrow" style="background:rgba(45,212,191,0.3)"></div>
+          </div>
+          <div class="stage-box" style="background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.5);color:#4ade80">Joined</div>
+        </div>
+      </div>
+
+      <div class="section-title">Candidate Multi-Pipeline Example</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title" style="color:var(--blue)">Rahul Kumar — candidates table (1 row)</div>
+          <div class="entity-fields">
+            <div class="field-row"><span class="field-name">email</span><span style="color:var(--text-mid);font-size:12px">rahul@gmail.com</span></div>
+            <div class="field-row"><span class="field-name">phone</span><span style="color:var(--text-mid);font-size:12px">+91 9876543210</span></div>
+            <div class="field-row"><span class="field-name">notice_period</span><span style="color:var(--teal);font-size:12px">30 days (custom field)</span></div>
+            <div class="field-row"><span class="field-name">current_ctc</span><span style="color:var(--teal);font-size:12px">12 LPA (custom field)</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="color:var(--coral)">pipeline_candidates — 2 rows</div>
+          <div style="margin-bottom:12px; padding:10px; background:var(--bg3); border-radius:6px; border:1px solid var(--border)">
+            <div style="font-size:11px; color:var(--amber); font-family:'JetBrains Mono',monospace; margin-bottom:4px">Pipeline: TCS Java Dev Job</div>
+            <div style="font-size:12px; color:var(--text-mid)">current_stage: <span style="color:var(--teal)">Technical Round</span></div>
+            <div style="font-size:12px; color:var(--text-mid)">status: <span style="color:var(--green)">active</span></div>
+          </div>
+          <div style="padding:10px; background:var(--bg3); border-radius:6px; border:1px solid var(--border)">
+            <div style="font-size:11px; color:var(--amber); font-family:'JetBrains Mono',monospace; margin-bottom:4px">Pipeline: Infosys Python Dev Job</div>
+            <div style="font-size:12px; color:var(--text-mid)">current_stage: <span style="color:var(--purple)">Offer</span></div>
+            <div style="font-size:12px; color:var(--text-mid)">status: <span style="color:var(--amber)">on_hold</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- end .main -->
 
 <script>
-// ── Setup ──────────────────────────────────────────────────────────────────
-const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const MONTHS_HI = ["January (Janvier)","February","March","April","May","June","July","August","September","October","November","December"];
-
-const DEFAULT_GOALS = [
-  { emoji:"⚡", name:"JavaScript", cat:"Code", mins:60, pri:true },
-  { emoji:"⚛️", name:"React.js", cat:"Code", mins:60, pri:true },
-  { emoji:"🗣️", name:"English Speaking", cat:"Language", mins:30, pri:true },
-  { emoji:"📖", name:"Vocabulary", cat:"Language", mins:20, pri:true },
-  { emoji:"🗄️", name:"SQL", cat:"Code", mins:45, pri:false },
-  { emoji:"🐳", name:"Docker", cat:"DevOps", mins:45, pri:false },
-  { emoji:"📚", name:"Book Reading", cat:"Habit", mins:20, pri:false },
-  { emoji:"🧩", name:"DSA / Coding", cat:"Code", mins:30, pri:false },
-  { emoji:"🚀", name:"LinkedIn / Portfolio", cat:"Career", mins:15, pri:false },
-];
-
-let activeGoals = new Set(DEFAULT_GOALS.map((_, i) => i));
-let customGoals = [];
-
-// Populate month/year selectors
-const monthSel = document.getElementById('monthSel');
-const yearSel = document.getElementById('yearSel');
-const now = new Date();
-
-MONTHS.forEach((m, i) => {
-  const opt = document.createElement('option');
-  opt.value = i; opt.textContent = m;
-  if (i === now.getMonth()) opt.selected = true;
-  monthSel.appendChild(opt);
-});
-
-for (let y = now.getFullYear(); y <= now.getFullYear() + 2; y++) {
-  const opt = document.createElement('option');
-  opt.value = y; opt.textContent = y;
-  if (y === now.getFullYear()) opt.selected = true;
-  yearSel.appendChild(opt);
-}
-
-// Render goals grid
-function renderGoals() {
-  const grid = document.getElementById('goalsGrid');
-  grid.innerHTML = '';
-  const allGoals = [...DEFAULT_GOALS, ...customGoals];
-  allGoals.forEach((g, i) => {
-    const tag = document.createElement('div');
-    tag.className = 'goal-tag' + (activeGoals.has(i) ? ' active' : '');
-    tag.innerHTML = `<div class="dot"></div><span class="goal-emoji">${g.emoji}</span><span>${g.name}</span>`;
-    tag.onclick = () => {
-      activeGoals.has(i) ? activeGoals.delete(i) : activeGoals.add(i);
-      renderGoals();
-    };
-    grid.appendChild(tag);
-  });
-}
-renderGoals();
-
-function addCustomGoal() {
-  const inp = document.getElementById('customGoalInput');
-  const val = inp.value.trim();
-  if (!val) return;
-  customGoals.push({ emoji:"🎯", name:val, cat:"Custom", mins:30, pri:false });
-  activeGoals.add(DEFAULT_GOALS.length + customGoals.length - 1);
-  inp.value = '';
-  renderGoals();
-}
-document.getElementById('customGoalInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addCustomGoal();
-});
-
-// ── Excel styles helpers ──────────────────────────────────────────────────
-function s(fgColor) { return { patternType:"solid", fgColor:{ rgb: fgColor } }; }
-
-function font(opts = {}) {
-  return { name: "Arial", sz: opts.sz||10, bold:!!opts.bold, color:{rgb: opts.color||"1E293B"}, italic:!!opts.italic };
-}
-
-function align(h="center", v="center", indent=0) {
-  return { horizontal:h, vertical:v, indent, wrapText: false };
-}
-
-function border(c="CBD5E1", thin=true) {
-  const st = thin ? "thin" : "medium";
-  return { top:{style:st,color:{rgb:c}}, bottom:{style:st,color:{rgb:c}}, left:{style:st,color:{rgb:c}}, right:{style:st,color:{rgb:c}} };
-}
-
-function cell(v, fillClr, fontOpts={}, alignOpts=[], borderClr=null) {
-  const c = { v, t: typeof v === 'number' ? 'n' : 's' };
-  const style = { fill: s(fillClr), font: font(fontOpts), alignment: align(...alignOpts) };
-  if (borderClr) style.border = border(borderClr);
-  c.s = style;
-  return c;
-}
-
-// ── Build worksheet data ──────────────────────────────────────────────────
-function setCell(ws, addr, v, fillClr, fontOpts, alignOpts, borderClr) {
-  ws[addr] = cell(v, fillClr, fontOpts, alignOpts, borderClr);
-}
-
-function mergeCells(ws, range) {
-  if (!ws['!merges']) ws['!merges'] = [];
-  ws['!merges'].push(XLSX.utils.decode_range(range));
-}
-
-function setRow(ws, row, height) {
-  if (!ws['!rows']) ws['!rows'] = [];
-  ws['!rows'][row - 1] = { hpt: height };
-}
-
-// ── SHEET 1: Weekly Tracker ───────────────────────────────────────────────
-function buildWeekly(month, year, goals, userName) {
-  const ws = { '!cols': [], '!rows': [], '!merges': [] };
-  const D="0A0A0F", MD="16213E", BL="3B82F6", PU="8B5CF6", GO="F59E0B";
-  const GN="10B981", WH="FFFFFF", LG="F1F5F9", PR="FFF7ED", NM="F8FAFC";
-  const monthName = MONTHS[month];
-  const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-
-  ws['!cols'] = [
-    {wch:3},{wch:24},{wch:10},{wch:8},
-    {wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:7},{wch:8}
-  ];
-
-  // Row 1: Title
-  setRow(ws, 1, 38);
-  const title = `${userName ? userName + " ka " : ""}WEEKLY FOCUS TRACKER — ${monthName} ${year}`;
-  ws['A1'] = { v: title, t:'s', s:{ fill:s(D), font:font({sz:13,bold:true,color:WH}), alignment:align("center","center") }};
-  mergeCells(ws, 'A1:L1');
-
-  // Row 2: Week + month goal
-  setRow(ws, 2, 20);
-  ws['A2'] = { v:"Week of: ___________________________", t:'s', s:{fill:s(MD), font:font({sz:10,color:"64748B"}), alignment:align("left","center",1)}};
-  mergeCells(ws, 'A2:D2');
-  ws['E2'] = { v:"Monthly Goal: _________________________________________", t:'s', s:{fill:s(MD), font:font({sz:10,color:"64748B"}), alignment:align("left","center",1)}};
-  mergeCells(ws, 'E2:L2');
-
-  // Row 3: Spacer
-  setRow(ws, 3, 6);
-  ws['A3'] = { v:"", t:'s', s:{fill:s("E2E8F0")}};
-  mergeCells(ws, 'A3:L3');
-
-  // Row 4: Column headers
-  setRow(ws, 4, 28);
-  const hdrs = ["#","Goal / Skill","Category","Target","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Total"];
-  const cols = ["A","B","C","D","E","F","G","H","I","J","K","L"];
-  hdrs.forEach((h,i) => {
-    ws[`${cols[i]}4`] = {v:h, t:'s', s:{fill:s(BL), font:font({sz:9,bold:true,color:WH}), alignment:align(), border:border("2563EB")}};
-  });
-
-  // Row 5: Dates
-  setRow(ws, 5, 16);
-  ws['A5'] = {v:"Date →", t:'s', s:{fill:s(LG), font:font({sz:8,color:"94A3B8"}), alignment:align()}};
-  mergeCells(ws, 'A5:D5');
-  ["E","F","G","H","I","J","K"].forEach(c => {
-    ws[`${c}5`] = {v:"___/__", t:'s', s:{fill:s(LG), font:font({sz:8,color:"94A3B8"}), alignment:align()}};
-  });
-  ws['L5'] = {v:"", t:'s', s:{fill:s(LG)}};
-
-  // Goals
-  let row = 6, num = 1;
-  const priorityGoals = goals.filter(g => g.pri);
-  const otherGoals = goals.filter(g => !g.pri);
-
-  // Priority header
-  setRow(ws, row, 20);
-  ws[`A${row}`] = {v:"⭐ PRIORITY GOALS — Pehle ye karo", t:'s', s:{fill:s("292524"), font:font({sz:9,bold:true,color:GO}), alignment:align()}};
-  mergeCells(ws, `A${row}:L${row}`); row++;
-
-  [...priorityGoals, {_sep:true}, ...otherGoals].forEach(g => {
-    if (g._sep) {
-      setRow(ws, row, 20);
-      ws[`A${row}`] = {v:"── OTHER GOALS ──", t:'s', s:{fill:s(LG), font:font({sz:8,bold:true,color:"94A3B8"}), alignment:align()}};
-      mergeCells(ws, `A${row}:L${row}`); row++; return;
-    }
-    const bg = g.pri ? PR : NM;
-    setRow(ws, row, 24);
-    ws[`A${row}`] = {v:num, t:'n', s:{fill:s(bg), font:font({sz:9,color:"94A3B8"}), alignment:align(), border:border()}};
-    ws[`B${row}`] = {v:`${g.emoji} ${g.name}`, t:'s', s:{fill:s(bg), font:font({sz:10,bold:g.pri,color:"1E293B"}), alignment:align("left","center",1), border:border()}};
-    ws[`C${row}`] = {v:g.cat, t:'s', s:{fill:s(bg), font:font({sz:8,color:"64748B"}), alignment:align(), border:border()}};
-    ws[`D${row}`] = {v:`${g.mins}min`, t:'s', s:{fill:s(bg), font:font({sz:9,bold:true,color:BL}), alignment:align(), border:border()}};
-    ["E","F","G","H","I","J","K"].forEach(c => {
-      ws[`${c}${row}`] = {v:"o", t:'s', s:{fill:s(bg), font:font({sz:14,color:"CBD5E1"}), alignment:align(), border:border()}};
-    });
-    ws[`L${row}`] = {v:"__ / 7", t:'s', s:{fill:s(bg), font:font({sz:9,color:"94A3B8"}), alignment:align(), border:border()}};
-    num++; row++;
-  });
-
-  // Week summary
-  setRow(ws, row, 6);
-  ws[`A${row}`] = {v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws, `A${row}:L${row}`); row++;
-  setRow(ws, row, 22);
-  ws[`A${row}`] = {v:"WEEK SUMMARY",t:'s',s:{fill:s(PU),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
-  mergeCells(ws, `A${row}:D${row}`);
-  ["E","F","G","H","I","J","K","L"].forEach((c,i) => {
-    ws[`${c}${row}`] = {v:["Mon","Tue","Wed","Thu","Fri","Sat","Sun","Total"][i],t:'s',s:{fill:s(PU),font:font({sz:9,bold:true,color:WH}),alignment:align(),border:border("7C3AED")}};
-  }); row++;
-  setRow(ws, row, 22);
-  ws[`A${row}`] = {v:`Goals (out of ${goals.length})`,t:'s',s:{fill:s("F5F3FF"),font:font({sz:9}),alignment:align("left","center",1),border:border()}};
-  mergeCells(ws, `A${row}:D${row}`);
-  ["E","F","G","H","I","J","K","L"].forEach(c => {
-    ws[`${c}${row}`] = {v:`__ / ${goals.length}`,t:'s',s:{fill:s("F5F3FF"),font:font({sz:9,color:"94A3B8"}),alignment:align(),border:border()}};
-  }); row++;
-
-  // Daily intention
-  setRow(ws, row, 6); ws[`A${row}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${row}:L${row}`); row++;
-  setRow(ws, row, 20);
-  ws[`A${row}`]={v:"DAILY INTENTION — Subah uthke ye likho",t:'s',s:{fill:s(D),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
-  mergeCells(ws,`A${row}:L${row}`); row++;
-  ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].forEach(day => {
-    setRow(ws, row, 20);
-    ws[`A${row}`]={v:day.substring(0,3),t:'s',s:{fill:s("EFF6FF"),font:font({sz:8,bold:true,color:BL}),alignment:align(),border:border()}};
-    ws[`B${row}`]={v:"",t:'s',s:{fill:s("FAFAFA"),border:border()}};
-    mergeCells(ws,`B${row}:L${row}`); row++;
-  });
-
-  // Footer
-  setRow(ws, row, 26);
-  ws[`A${row}`]={v:`"Consistency > Perfection — Roz thoda karo, ek din sab badal jayega." — ${monthName} ${year}`,t:'s',s:{fill:s("1C1917"),font:font({sz:10,bold:true,color:GO}),alignment:align()}};
-  mergeCells(ws,`A${row}:L${row}`);
-
-  ws['!ref'] = `A1:L${row}`;
-  return ws;
-}
-
-// ── SHEET 2: Monthly Habit Grid ────────────────────────────────────────────
-function buildMonthly(month, year, goals, userName) {
-  const ws = { '!cols':[], '!rows':[], '!merges':[] };
-  const D="0A0A0F", MD="16213E", BL="3B82F6", PU="8B5CF6", GO="F59E0B", WH="FFFFFF";
-  const monthName = MONTHS[month];
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const maxCol = 3 + daysInMonth;
-  const lastColLetter = XLSX.utils.encode_col(maxCol - 1);
-
-  ws['!cols'] = [{wch:3},{wch:22}];
-  for (let d=0;d<daysInMonth;d++) ws['!cols'].push({wch:3.2});
-
-  setRow(ws, 1, 34);
-  ws['A1']={v:`${userName?userName+" ka ":""}MONTHLY HABIT GRID — ${monthName} ${year}`,t:'s',s:{fill:s(D),font:font({sz:13,bold:true,color:WH}),alignment:align()}};
-  mergeCells(ws,`A1:${lastColLetter}1`);
-
-  setRow(ws, 2, 18);
-  ws['A2']={v:`Month: ${monthName} ${year}    Streak Goal: _____ days    Best Streak: _____ days`,t:'s',s:{fill:s(MD),font:font({sz:9,color:"94A3B8"}),alignment:align("left","center",1)}};
-  mergeCells(ws,`A2:${lastColLetter}2`);
-
-  // Headers
-  setRow(ws, 3, 22);
-  ws['A3']={v:"#",t:'s',s:{fill:s(BL),font:font({sz:9,bold:true,color:WH}),alignment:align()}};
-  ws['B3']={v:"Habit / Skill",t:'s',s:{fill:s(BL),font:font({sz:9,bold:true,color:WH}),alignment:align()}};
-  for (let d=1;d<=daysInMonth;d++) {
-    const colLetter = XLSX.utils.encode_col(2+d-1);
-    const isWeekend = new Date(year,month,d).getDay()===0 || new Date(year,month,d).getDay()===6;
-    ws[`${colLetter}3`]={v:d,t:'n',s:{fill:s(isWeekend?PU:BL),font:font({sz:8,bold:true,color:WH}),alignment:align(),border:border("2563EB")}};
+  function showPage(pageId, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + pageId).classList.add('active');
+    el.classList.add('active');
+    window.scrollTo(0, 0);
   }
-
-  // Goals
-  let row=4, num=1;
-  const priGoals = goals.filter(g=>g.pri);
-  const othGoals = goals.filter(g=>!g.pri);
-
-  setRow(ws,row,16);
-  ws[`A${row}`]={v:"PRIORITY",t:'s',s:{fill:s("292524"),font:font({sz:8,bold:true,color:GO}),alignment:align()}};
-  mergeCells(ws,`A${row}:${lastColLetter}${row}`); row++;
-
-  [...priGoals,{_sep:true},...othGoals].forEach(g=>{
-    if(g._sep){
-      setRow(ws,row,16);
-      ws[`A${row}`]={v:"OTHER GOALS",t:'s',s:{fill:s("F8FAFC"),font:font({sz:8,bold:true,color:"94A3B8"}),alignment:align()}};
-      mergeCells(ws,`A${row}:${lastColLetter}${row}`); row++; return;
-    }
-    const bg=g.pri?"FFF7ED":"F8FAFC";
-    setRow(ws,row,20);
-    ws[`A${row}`]={v:num,t:'n',s:{fill:s(bg),font:font({sz:8,color:"94A3B8"}),alignment:align(),border:border()}};
-    ws[`B${row}`]={v:`${g.emoji} ${g.name}`,t:'s',s:{fill:s(bg),font:font({sz:9,bold:g.pri,color:"1E293B"}),alignment:align("left","center",1),border:border()}};
-    for(let d=1;d<=daysInMonth;d++){
-      const cl=XLSX.utils.encode_col(2+d-1);
-      ws[`${cl}${row}`]={v:"o",t:'s',s:{fill:s(bg),font:font({sz:9,color:"CBD5E1"}),alignment:align(),border:border()}};
-    }
-    num++; row++;
-  });
-
-  setRow(ws,row+1,24);
-  ws[`A${row+1}`]={v:`OK=Kiya   o=Nahi kiya   /=Thoda kiya  |  ${monthName} ${year} — Har din fill karo!`,t:'s',s:{fill:s("1C1917"),font:font({sz:9,bold:true,color:GO}),alignment:align()}};
-  mergeCells(ws,`A${row+1}:${lastColLetter}${row+1}`);
-
-  ws['!ref']=`A1:${lastColLetter}${row+2}`;
-  return ws;
-}
-
-// ── SHEET 3: Daily Planner ─────────────────────────────────────────────────
-function buildDaily(month, year, goals) {
-  const ws = {'!cols':[],'!rows':[],'!merges':[]};
-  const D="0F172A",MD="1E293B",BL="3B82F6",GO="F59E0B",GN="10B981",WH="FFFFFF",MI="F0FDF4";
-  const monthName = MONTHS[month];
-  ws['!cols']=[{wch:4},{wch:6},{wch:28},{wch:14},{wch:14},{wch:10}];
-
-  let r=1;
-  // Title
-  setRow(ws,r,36);
-  ws[`A${r}`]={v:`DAILY PLANNER — ${monthName} ${year}`,t:'s',s:{fill:s(D),font:font({sz:12,bold:true,color:WH}),alignment:align()}};
-  mergeCells(ws,`A${r}:F${r}`); r++;
-
-  setRow(ws,r,20);
-  ws[`A${r}`]={v:`Date: ___________________________`,t:'s',s:{fill:s(MD),font:font({sz:10,color:"64748B"}),alignment:align("left","center",1)}};
-  mergeCells(ws,`A${r}:C${r}`);
-  ws[`D${r}`]={v:"Energy: 1  2  3  4  5",t:'s',s:{fill:s(MD),font:font({sz:9,color:"64748B"}),alignment:align()}};
-  mergeCells(ws,`D${r}:F${r}`); r++;
-
-  setRow(ws,r,6); ws[`A${r}`]={v:"",t:'s',s:{fill:s("334155")}}; mergeCells(ws,`A${r}:F${r}`); r++;
-
-  // Intention
-  setRow(ws,r,20);
-  ws[`A${r}`]={v:"SUBAH KA INTENTION (Uthte hi likho)",t:'s',s:{fill:s("0F4C75"),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
-  mergeCells(ws,`A${r}:F${r}`); r++;
-  [
-    "Aaj mera ek sabse important goal: __________________________________________________",
-    "Aaj main ye 3 cheezein karunga:",
-    "  1) ___________________________________________________________________________",
-    "  2) ___________________________________________________________________________",
-    "  3) ___________________________________________________________________________",
-  ].forEach((txt,i)=>{
-    setRow(ws,r,19);
-    ws[`A${r}`]={v:txt,t:'s',s:{fill:s(i%2===0?"EFF6FF":"DBEAFE"),font:font({sz:10,color:"1E293B"}),alignment:align("left","center",1),border:border()}};
-    mergeCells(ws,`A${r}:F${r}`); r++;
-  });
-
-  setRow(ws,r,6); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:F${r}`); r++;
-
-  // Time blocks header
-  setRow(ws,r,22);
-  ws[`A${r}`]={v:"TIME BLOCKS — Apna din plan karo",t:'s',s:{fill:s(BL),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
-  mergeCells(ws,`A${r}:F${r}`); r++;
-  setRow(ws,r,18);
-  [["A","#"],["B","Time"],["C","Task / Goal"],["D","Goal Area"],["E","Notes"],["F","Done?"]].forEach(([c,h])=>{
-    ws[`${c}${r}`]={v:h,t:'s',s:{fill:s("1D4ED8"),font:font({sz:9,bold:true,color:WH}),alignment:align(),border:border("2563EB")}};
-  }); r++;
-
-  const slots=["5:00-6:00","6:00-7:00","7:00-8:00","8:00-9:00","9:00-10:00","10:00-11:00","11:00-12:00","12:00-1:00","1:00-2:00","2:00-3:00","3:00-4:00","4:00-5:00","5:00-6:00 PM","6:00-7:00 PM","7:00-8:00 PM","8:00-9:00 PM","9:00-10:00 PM","10:00-11:00 PM"];
-  slots.forEach((t,i)=>{
-    const bg=i%2===0?"FFFBEB":"FFF7ED";
-    setRow(ws,r,20);
-    ws[`A${r}`]={v:i+1,t:'n',s:{fill:s(bg),font:font({sz:8,color:"94A3B8"}),alignment:align(),border:border()}};
-    ws[`B${r}`]={v:t,t:'s',s:{fill:s(bg),font:font({sz:8,bold:true,color:GO}),alignment:align(),border:border()}};
-    ws[`C${r}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
-    ws[`D${r}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
-    ws[`E${r}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
-    ws[`F${r}`]={v:"o",t:'s',s:{fill:s(bg),font:font({sz:11,color:"CBD5E1"}),alignment:align(),border:border()}};
-    r++;
-  });
-
-  setRow(ws,r,6); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:F${r}`); r++;
-
-  setRow(ws,r,20);
-  ws[`A${r}`]={v:"RAAT KA REFLECTION (Sone se pehle)",t:'s',s:{fill:s("064E3B"),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
-  mergeCells(ws,`A${r}:F${r}`); r++;
-  ["Aaj maine kya achieve kiya: ___________________________________________",
-   "Sabse badi distraction: ________________________________________________",
-   "Kal improve karunga: __________________________________________________",
-   "Aaj ka self-rating (1-10): _______   Feeling: _________________________"].forEach((txt,i)=>{
-    setRow(ws,r,19);
-    ws[`A${r}`]={v:txt,t:'s',s:{fill:s(i%2===0?MI:"DCFCE7"),font:font({sz:10,color:"1E293B"}),alignment:align("left","center",1),border:border()}};
-    mergeCells(ws,`A${r}:F${r}`); r++;
-  });
-
-  setRow(ws,r,22);
-  ws[`A${r}`]={v:`"Jo aaj kiya woh kal ki duniya mein add ho gaya." — ${MONTHS[month]} ${year}`,t:'s',s:{fill:s(D),font:font({sz:10,bold:true,color:GO}),alignment:align()}};
-  mergeCells(ws,`A${r}:F${r}`);
-  ws['!ref']=`A1:F${r}`;
-  return ws;
-}
-
-// ── SHEET 4: Todo List ─────────────────────────────────────────────────────
-function buildTodo(month, year) {
-  const ws = {'!cols':[],'!rows':[],'!merges':[]};
-  const D="0F172A",MD="1E293B",BL="3B82F6",GO="F59E0B",WH="FFFFFF";
-  const monthName=MONTHS[month];
-  ws['!cols']=[{wch:4},{wch:4},{wch:32},{wch:14},{wch:12},{wch:12},{wch:9},{wch:9}];
-
-  let r=1;
-  setRow(ws,r,36);
-  ws[`A${r}`]={v:`TODO LIST — ${monthName} ${year}`,t:'s',s:{fill:s(D),font:font({sz:14,bold:true,color:WH}),alignment:align()}};
-  mergeCells(ws,`A${r}:H${r}`); r++;
-
-  setRow(ws,r,18);
-  ws[`A${r}`]={v:"[H]=High [M]=Medium [L]=Low   Status: O=Pending >>>=In Progress OK=Done X=Cancelled",t:'s',s:{fill:s(MD),font:font({sz:9,color:"94A3B8"}),alignment:align()}};
-  mergeCells(ws,`A${r}:H${r}`); r++;
-
-  setRow(ws,r,6); ws[`A${r}`]={v:"",t:'s',s:{fill:s("334155")}}; mergeCells(ws,`A${r}:H${r}`); r++;
-
-  function secHdr(row,txt,bg){
-    setRow(ws,row,22);
-    ws[`A${row}`]={v:txt,t:'s',s:{fill:s(bg),font:font({sz:10,bold:true,color:WH}),alignment:align()}};
-    mergeCells(ws,`A${row}:H${row}`);
-  }
-  function colHdrs(row,hdrs,bg){
-    setRow(ws,row,20);
-    hdrs.forEach((h,i)=>{
-      const c=["A","B","C","D","E","F","G","H"][i];
-      ws[`${c}${row}`]={v:h,t:'s',s:{fill:s(bg),font:font({sz:9,bold:true,color:WH}),alignment:align(),border:border("2563EB")}};
-    });
-  }
-  function todoRows(startRow,count,bg1,bg2){
-    for(let i=0;i<count;i++){
-      const ro=startRow+i;
-      const bg=i%2===0?bg1:bg2;
-      setRow(ws,ro,22);
-      ws[`A${ro}`]={v:i+1,t:'n',s:{fill:s(bg),font:font({sz:9,color:"94A3B8"}),alignment:align(),border:border()}};
-      ws[`B${ro}`]={v:"[H]",t:'s',s:{fill:s(bg),font:font({sz:9,bold:true,color:"EF4444"}),alignment:align(),border:border()}};
-      ws[`C${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
-      ws[`D${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
-      ws[`E${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align(),border:border()}};
-      ws[`F${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
-      ws[`G${ro}`]={v:"O",t:'s',s:{fill:s(bg),font:font({sz:11,color:"CBD5E1"}),alignment:align(),border:border()}};
-      ws[`H${ro}`]={v:"",t:'s',s:{fill:s(bg),alignment:align("left","center",1),border:border()}};
-    }
-  }
-
-  const hdr=["#","Pri","Task / Todo","Category","Due","Goal Link","Status","Notes"];
-  secHdr(r,"AAJ KE TODOS (Aaj khatam karne hain)","7C3AED"); r++;
-  colHdrs(r,hdr,"5B21B6"); r++;
-  todoRows(r,10,"FAF5FF","F5F3FF"); r+=10;
-
-  setRow(ws,r,8); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:H${r}`); r++;
-  secHdr(r,"IS HAFTE KE TODOS (7 din mein complete karo)",BL); r++;
-  colHdrs(r,hdr,"1D4ED8"); r++;
-  todoRows(r,12,"EFF6FF","DBEAFE"); r+=12;
-
-  setRow(ws,r,8); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:H${r}`); r++;
-  secHdr(r,"SOMEDAY LIST (Baad mein — Important but not urgent)","047857"); r++;
-  colHdrs(r,["#","Pri","Task / Todo","Category","Month","Goal Link","Status","Notes"],"065F46"); r++;
-  todoRows(r,12,"F0FDF4","DCFCE7"); r+=12;
-
-  setRow(ws,r,8); ws[`A${r}`]={v:"",t:'s',s:{fill:s("E2E8F0")}}; mergeCells(ws,`A${r}:H${r}`); r++;
-  secHdr(r,`LEARNING QUEUE — ${monthName} ${year} (Books, Courses, Videos)`,"B45309"); r++;
-  colHdrs(r,["#","Pri","Resource / Topic","Type","Platform","Goal Link","Status","Link/Notes"],"92400E"); r++;
-  todoRows(r,10,"FFFBEB","FEF3C7"); r+=10;
-
-  setRow(ws,r,24);
-  ws[`A${r}`]={v:`Roz subah 5 min: Review > Top 3 choose karo > Baaki block karo | ${monthName} ${year}`,t:'s',s:{fill:s(D),font:font({sz:9,bold:true,color:GO}),alignment:align()}};
-  mergeCells(ws,`A${r}:H${r}`);
-
-  ws['!ref']=`A1:H${r}`;
-  return ws;
-}
-
-// ── MAIN GENERATOR ─────────────────────────────────────────────────────────
-function setProgress(pct, txt) {
-  document.getElementById('progressBar').style.width = pct + '%';
-  document.getElementById('progressText').textContent = txt;
-}
-
-function generateExcel() {
-  const month = parseInt(document.getElementById('monthSel').value);
-  const year = parseInt(document.getElementById('yearSel').value);
-  const userName = document.getElementById('userName').value.trim();
-  const allGoals = [...DEFAULT_GOALS, ...customGoals];
-  const selectedGoals = allGoals.filter((_,i) => activeGoals.has(i));
-
-  if (selectedGoals.length === 0) {
-    alert('Koi goal select nahi kiya! Kam se kam ek goal chuniye. 😊');
-    return;
-  }
-
-  const btn = document.getElementById('genBtn');
-  btn.disabled = true;
-
-  document.getElementById('progressWrap').classList.add('show');
-  document.getElementById('successBox').classList.remove('show');
-
-  setTimeout(() => {
-    setProgress(10, 'Weekly Tracker bana raha hun...');
-    setTimeout(() => {
-      const ws1 = buildWeekly(month, year, selectedGoals, userName);
-      setProgress(30, 'Monthly Habit Grid bana raha hun...');
-      setTimeout(() => {
-        const ws2 = buildMonthly(month, year, selectedGoals, userName);
-        setProgress(55, 'Daily Planner bana raha hun...');
-        setTimeout(() => {
-          const ws3 = buildDaily(month, year, selectedGoals);
-          setProgress(75, 'Todo List bana raha hun...');
-          setTimeout(() => {
-            const ws4 = buildTodo(month, year);
-            setProgress(90, 'File pack kar raha hun...');
-            setTimeout(() => {
-              const wb = XLSX.utils.book_new();
-              XLSX.utils.book_append_sheet(wb, ws1, "Weekly Tracker");
-              XLSX.utils.book_append_sheet(wb, ws2, "Monthly Habit Grid");
-              XLSX.utils.book_append_sheet(wb, ws3, "Daily Planner");
-              XLSX.utils.book_append_sheet(wb, ws4, "Todo List");
-
-              const monthName = MONTHS[month];
-              const fname = `Focus_Tracker_${userName ? userName + "_" : ""}${monthName}_${year}.xlsx`;
-              XLSX.writeFile(wb, fname, { cellStyles: true, bookType: 'xlsx' });
-
-              setProgress(100, 'Done! Downloading...');
-              btn.disabled = false;
-
-              document.getElementById('successMsg').textContent =
-                `${fname} download ho gaya! Print karo aur wall pe lagao. ${monthName} ${year} mein goals crush karo! 💪`;
-              document.getElementById('successBox').classList.add('show');
-            }, 200);
-          }, 300);
-        }, 300);
-      }, 300);
-    }, 200);
-  }, 100);
-}
 </script>
 </body>
 </html>
